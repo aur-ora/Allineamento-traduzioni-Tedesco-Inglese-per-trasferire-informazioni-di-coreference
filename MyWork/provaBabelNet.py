@@ -1,12 +1,13 @@
 import spacy
-import de_core_news_sm
-from nltk.corpus import wordnet as wn
+from spacy_babelnet import BabelnetAnnotator
 
 stopwordsEN = "".join(open("english-stop-words-large.txt", "r").readlines()) #carico il file delle stopword inglesi
 stopwordsDE = "".join(open("german-stop-words.txt", "r").readlines()) #carico il file delle stopword tedesche
 
-nlp = spacy.load("en_core_web_sm") #carico i modelli inglesi di spacy
-nlp2 = de_core_news_sm.load() #carico i modelli tedeschi di spacy
+nlp = spacy.load("en")
+nlp.add_pipe(BabelnetAnnotator("en"))
+nlp2 = spacy.load("de")
+nlp2.add_pipe(BabelnetAnnotator("de"))
 
 
 #Il metodo createSet_en crea una lista di insiemi che contengono i synset di ciascuna frase del testo inglese
@@ -19,15 +20,10 @@ def createSet_en(enfile):
     for sent in sent_en: #per ogni frase nel testo inglese
         set_en = set() #creo un'insieme in cui si troveranno i synset
         for token in sent: #per ogni parola nella frase
-            token = str(token.lemma_).lower() #prendo il lemma lowercase di ogni parola
-            if token not in stopwordsEN: #se il lemma della parola non è un stopword
-                t = [] #creo la lista in cui metto i synset che poi trasformerò in tupla
-                lemmas = wn.lemmas(token)
-                for lemma in lemmas: #per ogni lemma nella lista dei lemmi
-                    t.append(lemma.synset()) #aggiungi il synset nella lista
-                for synset in t: #per ogni synset nella lista
-                    set_en.add(synset) #aggiungo il synset nel set dei synset di una singola frase
-        synset_en.append(set_en) #aggiungo l'insieme dei synset in una lista
+            if str(token) not in stopwordsEN: #se non è una stopword
+                for synset in token._.babelnet.synsets(): #per ogni synset della parola
+                    set_en.add(str(synset.getID())) #aggiungo l'ID nell'insieme
+        synset_en.append(set_en) #aggiungo l'insieme degli id dei synset della parola nella lista
     return synset_en
 
 
@@ -38,18 +34,13 @@ def createSet_de(defile):
     doc = nlp2(defile.read())
     for s in doc.sents: #Mi salvo ogni frase separatamente all'intero di una lista
         sent_de.append(s)
-    for sent in sent_de:#per ogni frase nel testo tedesco
+    for sent in sent_de: #per ogni frase nel testo tedesco
         set_de = set() #creo un'insieme in cui si troveranno i synset
-        for token in sent:
-            token = str(token.lemma_).lower() #prendo il lemma lowercase di ogni parola
-            if token not in stopwordsDE: #se il lemma della parola non è un stopword
-                t = [] #creo la lista in cui metto i synset che poi trasformerò in tupla
-                lemmas = wn.lemmas(token, lang="deu")
-                for lemma in lemmas: #per ogni lemma nella lista dei lemmi
-                    t.append(lemma.synset()) #aggiungi il synset nella lista
-                for synset in t: #per ogni synset nella lista
-                    set_de.add(synset)  #aggiungo il synset nel set dei synset di una singola frase
-        synset_de.append(set_de) #aggiungo l'insieme dei synset in una lista
+        for token in sent: #per ogni parola nella frase
+            if str(token) not in stopwordsDE: #se non è una stopword
+                for synset in token._.babelnet.synsets(): #per ogni synset della parola
+                    set_de.add(str(synset.getID())) #aggiungo l'ID nell'insieme
+        synset_de.append(set_de) #aggiungo l'insieme degli id dei synset della parola nella lista
     return synset_de
 
 
@@ -58,8 +49,6 @@ def sameSentence(enfile, defile):
     list_set_en = createSet_en(enfile) #creo la lista degli insiemi dei synset di ciascuna frase inglese
     list_set_de = createSet_de(defile) #creo la lista degli insiemi dei synset di ciascuna frase tedesca
     for i in range(min(len(list_set_de), len(list_set_en))): #prendo le frasi attraverso gli indici della lista
-        print("ENGLISH --> " + str(list_set_en[i]))
-        print("DEUTSCH --> " + str(list_set_de[i]))
         commonMeaning = list_set_en[i] & list_set_de[i] #ricavo l'intersezione della coppia di insiemi di synset (inglese e tedesco)
         totalMeaning = list_set_en[i] | list_set_de[i] #ricavo l'unione della coppia di insiemi di synset (inglese e tedesco)
         print("FRASE " + str(i + 1) + ": " + "Significati comuni -> " + str(commonMeaning) + "  " + "Significati totali -> " + str(totalMeaning))
@@ -68,6 +57,7 @@ def sameSentence(enfile, defile):
         else:
             sentences.append(0)
     return sentences
+
 
 def sameSentenceEN(enfile, defile):
     sentences = []
@@ -82,3 +72,16 @@ def sameSentenceEN(enfile, defile):
         else:
             sentences.append(0)
     return sentences
+
+def main():
+    englishTXT = open("sentences.txt", "r")
+    germanTXT = open("sätze.txt", "r")
+    en = open("one.txt", "r")
+    en1 = open("one.txt", "r")
+    de = open("ein.txt", "r")
+    de1 = open("ein.txt", "r")
+    print(sameSentence(englishTXT, germanTXT))
+    #print(createSet_en(englishTXT))
+    #print(createSet_de(germanTXT))
+if __name__ == "__main__":
+      main()
