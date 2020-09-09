@@ -1,10 +1,16 @@
 import MyWork
 # Defining main function
 def main():
-    englishTXT = open("provaEN.txt", "r")
-    germanTXT = open("provaDE.txt", "r")
-    return (MyWork.createSet_en(englishTXT))
-    return (MyWork.createSet_de(germanTXT))
+    enTXT = open("junger.marbledue.en.txt", "r")
+    deTXT = open("junger.marmordue.de.txt", "r")
+    fifth = open("sentences.txt", "r")
+    funf = open("sätze.txt", "r")
+    en = open("one.txt", "r")
+    de = open("ein.txt", "r")
+    #print((MyWork.createSet_en(englischTXT)))
+    #print((MyWork.createSet_de(deutschTXT)))
+    print(MyWork.alignmentBabelNet.sameSentence(enTXT, deTXT))
+    #print(MyWork.getCoreference("conrad.darkness.en.txt"))
 
 if __name__ == "__main__":
       main()

@@ -1,0 +1,5 @@
+{"sb":["nsubj", "nsubjpass"], "nk":["poss", "det", "pobj", "amod", "dobj", "appos", "ccomp"], "ROOT":["ROOT"], "mo":["advmod", "prep", "acomp", "advcl"], "oa":["amod", "dobj", "pobj", "compound"], "punct":["punct"], "pm":["aux"], "oc":["auxpass", "xcomp", "acl", "ccomp", "aux", "relcl"], "da":["dobj"], "pd":["compound", "attr", "acomp"], "cp":["mark", "aux"], "mnr":["prep", "appos"], "cj":["compound", "conj"], "cd":["compound", "cc"], "re":["conj"], "pnc":["compound"], "rc":["relcl", "aux"], "pg":["quantmod", "prep", "aux"]}
+
+{'nsubj': ['sb'], 'nsubjpass': ['sb'], 'poss': ['nk'], 'det': ['nk'], 'pobj': ['nk', 'oa'], 'amod': ['nk', 'oa'], 'dobj': ['nk', 'oa', 'da'], 'appos': ['nk', 'mnr'], 'ccomp': ['nk', 'oc'], 'ROOT': ['ROOT'], 'advmod': ['mo'], 'prep': ['mo', 'mnr', 'pg'], 'acomp': ['mo', 'pd'], 'advcl': ['mo'], 'compound': ['oa', 'pd', 'cj', 'cd', 'pnc'], 'punct': ['punct'], 'aux': ['pm', 'oc', 'cp', 'rc', 'pg'], 'auxpass': ['oc'], 'xcomp': ['oc'], 'acl': ['oc'], 'relcl': ['oc', 'rc'], 'attr': ['pd'], 'mark': ['cp'], 'conj': ['cj', 're'], 'cc': ['cd'], 'quantmod': ['pg']}
+
+   

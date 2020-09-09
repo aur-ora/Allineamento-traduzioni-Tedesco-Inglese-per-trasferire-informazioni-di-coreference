@@ -1,0 +1,26 @@
+import stanza
+from spacy_stanza import StanzaLanguage
+from nltk.corpus import wordnet as wn
+
+#Uso di stanza per ricavare da una frase i lemmi, i pos, i ner e le dep-parse
+
+#stanza.download("en")
+snlp = stanza.Pipeline("en")
+nlp = StanzaLanguage(snlp)
+lista = []
+
+doc = nlp("The Nellie, a cruising yawl, swung to her anchor without a flutter of the sails, and was at rest.")
+for token in doc:
+    lista.append([token.text, token.lemma_, token.pos_, token.dep_, token.ent_type_])
+
+for elemento in lista:
+    if elemento[2] == "NOUN":
+        print(wn.lemmas(elemento[1]))
+    if elemento[2] == "PROPN":
+        print(elemento[1])
+
+#Ricavare i lemmi (synset) delle parole
+#from nltk.corpus import wordnet as wn
+#lem = wn.lemmas("anchor")
+
+#print(lem)

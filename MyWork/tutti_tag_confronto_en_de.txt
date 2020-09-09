@@ -1,0 +1,62 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'nsubj': ['They'], 'advmod': ['brightly'], 'ROOT': ['decorated'], 'det': ['the', 'the'], 'amod': ['wooden'], 'dobj': ['house'], 'prep': ['for'], 'pobj': ['holiday'], 'punct': ['.'], '': ['\n']}
+{'sb': ['Sie'], 'ROOT': ['schmückten'], 'nk': ['das', 'den', 'Urlaub'], 'oa': ['Holzhaus'], 'mo': ['hell', 'für'], 'punct': ['.'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'det': ['The', 'a'], 'nsubj': ['ability'], 'aux': ['to'], 'acl': ['help'], 'dobj': ['others'], 'ROOT': ['is'], 'advmod': ['very'], 'amod': ['important'], 'compound': ['character'], 'attr': ['trait'], 'punct': ['.'], '': ['\n']}
+{'nk': ['Die', 'ein', 'wichtiges'], 'sb': ['Fähigkeit'], 'punct': [',', ',', '.'], 'da': ['anderen'], 'pm': ['zu'], 'oc': ['helfen'], 'ROOT': ['ist'], 'mo': ['sehr'], 'pd': ['Charaktermerkmal'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'nsubj': ['It'], 'ROOT': ['smells'], 'advmod': ['very'], 'acomp': ['delicious'], 'prep': ['in'], 'det': ['the'], 'pobj': ['kitchen'], 'punct': ['.'], '': ['\n']}
+{'sb': ['Es'], 'ROOT': ['riecht'], 'mo': ['sehr', 'köstlich', 'in'], 'nk': ['der', 'küche'], 'punct': ['.'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'nsubj': ['Luke', 'Rosemary'], 'ROOT': ['explained'], 'advmod': ['why'], 'ccomp': ['was'], 'acomp': ['late'], 'prep': ['for'], 'pobj': ['class'], 'punct': ['.'], '': ['\n']}
+{'sb': ['Luke', 'Rosemary'], 'ROOT': ['erklärte'], 'punct': [',', '.'], 'mo': ['warum', 'zu', 'spät', 'zum'], 'nk': ['Unterricht'], 'oc': ['kam'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'nsubj': ['We', 'Mike', 'experience'], 'ROOT': ['are'], 'acomp': ['delighted', 'confident'], 'mark': ['that', 'that'], 'aux': ['has', 'will'], 'ccomp': ['joined', 'make'], 'det': ['the', 'this', 'the', 'a', 'this'], 'compound': ['Evening', 'media', 'leadership'], 'dobj': ['Standard', 'success'], 'prep': ['at', 'for', 'of'], 'amod': ['important', 'vast', 'great', 'new'], 'pobj': ['time', 'company', 'role'], 'cc': ['and', 'and'], 'conj': ['are', 'skills'], 'poss': ['his'], 'punct': ['.'], '': ['\n']}
+{'sb': ['Wir', 'Mike', 'Erfahrung'], 'ROOT': ['sind'], 'mo': ['sehr', 'zu'], 'pd': ['erfreut', 'zuversichtlich'], 'punct': [',', ',', '.'], 'cp': ['dass', 'dass'], 'nk': ['diesem', 'wichtigen', 'Zeitpunkt', 'das', 'Unternehmen', 'dem', 'seine', 'große', 'den', 'Medien', 'seine', 'diese', 'neue', 'einem', 'großen', 'Erfolg'], 'mnr': ['für', 'in', 'zu'], 'pnc': ['Evening'], 'da': ['Standard'], 'oc': ['beigetreten', 'machen', 'werden'], 're': ['ist'], 'cd': ['und', 'und'], 'cj': ['sind', 'Führungsqualitäten'], 'oa': ['Rolle'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'nsubj': ['Teddy', 'who'], 'ROOT': ['called'], 'compound': ['Mr', 'Jane', 'Defence', 'Washington'], 'oprd': ['Mattis'], 'cc': ['and'], 'auxpass': ['was'], 'conj': ['granted'], 'det': ['an', 'the'], 'dobj': ['interview', 'years'], 'prep': ['along', 'with', 'by', 'in'], 'poss': ['his', 'his'], 'pobj': ['editor', 'Secretary', 'state'], 'appos': ['Gormley', 'himself'], 'punct': [',', '.'], 'relcl': ['spent'], 'amod': ['early'], '': ['\n']}
+{'sb': ['Teddy', 'der'], 'ROOT': ['rief'], 'oa': ['Mr.', 'Jahre', 'Interview'], 'nk': ['Mattis', 'seiner', 'Redakteurin', 'Gormley', 'Verteidigungsminister', 'seine', 'ersten', 'Bundesstaat', 'Washington', 'ein'], 'svp': ['an'], 'cd': ['und'], 'cj': ['erhielt'], 'mo': ['zusammen', 'mit', 'im'], 'pnc': ['Jane'], 'mnr': ['vom', 'selbst'], 'punct': [',', ',', '.'], 'rc': ['verbrachte'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'det': ['The', 'a'], 'nsubj': ['connection'], 'ROOT': ['is'], 'acomp': ['ritualistic'], 'cc': ['and'], 'conj': ['forged'], 'prep': ['on', 'of'], 'pobj': ['bond', 'trust'], 'punct': ['.'], '': ['\n']}
+{'nk': ['Die', 'ein', 'Vertrauensverhältnis'], 'sb': ['Verbindung'], 'ROOT': ['ist'], 'pd': ['rituell'], 'cd': ['und'], 'mo': ['auf'], 'cj': ['geschmiedet'], 'punct': ['.'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'det': ['The', 'the', 'a'], 'nummod': ['2020', 'ten'], 'compound': ['Digital', 'News', 'climate'], 'nsubj': ['Report', 'people'], 'ROOT': ['found'], 'mark': ['that'], 'advmod': ['globally'], 'punct': [',', '.'], 'quantmod': ['seven', 'in'], 'ccomp': ['view'], 'dobj': ['emergency'], 'prep': ['as'], 'amod': ['serious'], 'pobj': ['problem'], '': ['\n']}
+{'nk': ['Der', '2020', 'zehn', 'Menschen', 'den', 'ernstes', 'Problem'], 'pnc': ['Digital', 'News'], 'sb': ['Report', 'sieben'], 'ROOT': ['stellten'], 'svp': ['fest'], 'punct': [',', '.'], 'cp': ['dass'], 'mo': ['weltweit', 'als'], 'pg': ['von'], 'oa': ['Klimanotfall'], 'oc': ['betrachten'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'prep': ['Through', 'of', 'of', 'to'], 'pobj': ['interviews', 'developers', 'data', 'questions'], 'cc': ['and', 'as', 'and'], 'conj': ['surveys', 'analysis', 'answers'], 'advmod': ['as', 'well'], 'compound': ['defect', 'research', 'program'], 'punct': [',', '.'], 'nsubj': ['we', 'that', 'researchers'], 'ROOT': ['provide'], 'dobj': ['insight', 'analyzers'], 'aux': ['can'], 'relcl': ['help'], 'ccomp': ['design'], '': ['\n']}
+{'mo': ['Durch', 'bei'], 'nk': ['Interviews', 'Entwicklern', 'Fehlerdaten', 'Forschungsfragen', 'die', 'der', 'Entwicklung', 'Programmanalysatoren'], 'cd': ['und', 'sowie', 'und'], 'cj': ['Umfragen', 'Analyse', 'Antworten'], 'pg': ['von', 'von', 'von'], 'ROOT': ['bieten'], 'sb': ['wir', 'Forschern'], 'oa': ['Einblicke'], 'mnr': ['auf'], 'punct': [',', '.'], 'oc': ['helfen', 'können'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'prep': ['In', 'for', 'with'], 'pobj': ['essence', 'bug', 'little', 'intervention'], 'punct': [',', ',', ',', ',', '.'], 'amod': ['automated', 'given', 'human'], 'compound': ['repair'], 'nsubj': ['techniques'], 'ROOT': ['try'], 'aux': ['to', 'can'], 'advmod': ['automatically', 'then', 'possibly', 'even'], 'xcomp': ['identify'], 'dobj': ['patches'], 'det': ['a'], 'nsubjpass': ['which'], 'auxpass': ['be'], 'relcl': ['applied'], 'cc': ['or'], 'conj': ['without'], '': ['\n']}
+{'mo': ['Im', 'automatisch', 'dann', 'mit', 'möglicherweise', 'sogar'], 'nk': ['Wesentlichen', 'automatisierte', 'einen', 'bestimmten', 'Fehler', 'wenig', 'menschliches', 'Eingreifen'], 'sb': ['Reparaturtechniken', 'die'], 'ROOT': ['versuchen'], 'punct': [',', ',', '.'], 'oa': ['Patches'], 'mnr': ['für'], 'pm': ['zu'], 'oc': ['identifizieren', 'angewendet', 'werden'], 'cd': ['oder'], 'cj': ['ohne'], 'rc': ['können'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'det': ['A', 'the'], 'compound': ['dependency', 'dependency'], 'nsubj': ['manager'], 'ROOT': ['automates'], 'dobj': ['downloading'], 'cc': ['and'], 'conj': ['installation'], 'prep': ['of'], 'pobj': ['packages'], 'punct': ['.'], '': ['\n']}
+{'nk': ['Ein', 'das', 'Abhängigkeitspaketen'], 'sb': ['Abhängigkeitsmanager'], 'ROOT': ['automatisiert'], 'oa': ['Herunterladen'], 'cd': ['und'], 'cj': ['Installieren'], 'pg': ['von'], 'punct': ['.'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+{'aux': ['To', 'to'], 'advcl': ['achieve'], 'det': ['a', 'the', 'a'], 'amod': ['high', 'large'], 'dobj': ['standard', 'number'], 'prep': ['of', 'of'], 'pobj': ['testing', 'tests'], 'punct': [',', ',', ',', '.'], 'nsubj': ['tester'], 'ROOT': ['needs'], 'xcomp': ['generate'], 'conj': ['execute', 'verify'], 'cc': ['and'], '': ['\n']}
+{'cp': ['Um'], 'nk': ['einen', 'hohen', 'der', 'eine', 'große', 'Tests'], 'oa': ['Teststandard', 'Anzahl'], 'pm': ['zu'], 'mo': ['erreichen'], 'punct': [',', ',', '.'], 'ROOT': ['muss'], 'sb': ['Tester'], 'pg': ['von'], 'oc': ['generieren'], 'cj': ['ausführen', 'verifizieren'], 'cd': ['und'], '': ['\n']}
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+

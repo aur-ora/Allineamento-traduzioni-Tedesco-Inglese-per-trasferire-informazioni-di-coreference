@@ -1,0 +1,116 @@
+conrad.agent:
+Adolf
+Winnie
+Stevie
+Michaelis
+Karl
+Alexander
+
+conrad.darkness:
+Charlie Marlow
+Kurtz
+
+dickens.copperfield:
+Uriah Heep
+Clara Peggotty
+David Copperfield
+Wilkins Micawber
+Edward Murdstone
+James Steerforth
+Betsey Trotwood
+Dora Spenlow
+Agnes Wickfield
+Emily
+Clara Copperfield
+Tommy Traddles -> Thomas
+Jane Murdstone
+Rosa Dartle
+Annie
+Emma
+Daniel
+Mr.Dick -> Richard Babley
+Janet
+Julia
+Anna -> Annie
+
+dickens.oliver:
+Oliver Twist
+Fagin
+Artful
+Nancy
+Rose
+Monks
+Bill
+Agnes
+Harry
+Jack
+Charley
+Sally
+Noah
+Charlotte
+Toby
+Bet
+Barney
+Tom
+
+poe.masque:
+Prospero
+
+poe.usher:
+Roderick
+Madeline
+
+stevenson.treasure:
+Jim
+Billy
+Squire
+John
+Ben
+Pew
+Israel
+Tom
+David
+Alexander
+Flint
+Dick
+Merry
+
+twain.hucklberry:
+Huckleberry Finn -> Huck
+Tom
+Jim
+Pap
+Silas 
+Sally
+Polly
+Judith
+Mary Jane
+Johanna
+
+twain.sawyer:
+Tom -> Thomas
+Polly
+Huckleberry Fin -> Huck
+Becky -> Rebecca
+Joe
+Sid -> Sidney
+Mary
+Muff
+Amy -> Amanda
+Alfred -> Fred
+Ben 
+Johnny
+Billy
+Jeff
+Willie
+
+wilde.dorian:
+Dorian Gray
+Henry
+Basil
+Sibyl
+James
+Alan
+Agatha
+Victoria -> Viktoria
+Victor -> Viktor
