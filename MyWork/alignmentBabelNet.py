@@ -3,6 +3,7 @@ from spacy_babelnet import BabelnetAnnotator
 from nltk import Tree
 from bs4 import BeautifulSoup
 from pathlib import Path
+import re
 
 stopwordsEN = "".join(open("english-stop-words-large.txt", "r").readlines()) #carico il file delle stopword inglesi
 stopwordsDE = "".join(open("german-stop-words.txt", "r").readlines()) #carico il file delle stopword tedesche
@@ -98,7 +99,7 @@ def sameSentence(enfile, defile):
     return 0
 
 #Il metodo getCoreference prende in input il nome (stringa) del file di interesse (testo inglese) e ricava il file .html
-#che contiene le info sulle coreference del testo e lo salva in formato txt
+#che contiene le info sulle coreference del testo e lo salva in formato txt, e ritorna la lista dei nomi ricavati applicando la coreference
 def getCoreference(nameEnfile):
     nameEnfile = nameEnfile[:len(nameEnfile) - 4] #prendo solo il nome del file senza l'estensione txt
     data_folder = Path("../book-nlp-master/data/output/" + nameEnfile[:nameEnfile.index(".")] + "/" + nameEnfile + ".html") #mi salvo la directory dei file .html ricavati usando un comando di book nlp
@@ -108,10 +109,22 @@ def getCoreference(nameEnfile):
     file.write(soup.get_text()) #salvo il testo convertito nel file
     f = open(filePcr, "r") #riapro il lettura il file appena salvato
     lines = f.readlines() #creo una lista di stringhe che contiene le frasi del testo
+    names = lines[0].replace("\t", "").replace("(", "").replace(")", "").replace("Characters", "").replace("\n", "") #ricavo i nomi dei personaggi trovati con la coreference, elimino le parentesi, il tab, l'accapo e la stringa "Characters" (introdotta con la coref)
+    names = list(set(re.sub("\d", ",", names).split(","))) #la faccio diventare una lista, ma prima elimino i numeri e i duplicati
+    for i in range(len(names)): #elimino gli eventuali spazi
+        if names[i].startswith(" "): #all'inizio del nome
+            names[i] = names[i][1:] #sostituisco il nome con il nome senza spazi davanti
+        if names[i].endswith(" "): #alla fine del nome
+            names[i] = names[i][: len(names[i]) - 1] #sostituisco il nome con il nome senza spazi alla fine
+        if "Text" in names[i]: #sostituisco direttamente la stringa che contiene "Text"
+            names[i] = "" #con la stringa vuota (diversamente da "Characters", che potrebbe contenere un nome)
+    for name in names: #per ogni nome
+        if name == "": #se ho una stringa vuota
+            names.remove(name) #la rimuovo
     lines[0] = lines[0][lines[0].index("Text") + 4:] #elimino la prima riga tranne la parte dopo "Text" (è stata creata dopo e non fa parte del testo iniziale)
     f1 = open(filePcr, "w") #apro lo stesso file in scrittura
     f1.write("".join(lines)) #risalvo il contenuto meno la prima riga nel file che contiene la coreference
-    return filePcr #ritorno il nome del file con le coreference per rendere più facile il suo utilizzo successivamente
+    return names #ritorno la lista dei nomi individuati con la coreference
 
 # def tok_format(tok):
 #     return "_".join([tok.orth_, tok.dep_])
