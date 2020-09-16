@@ -18,14 +18,15 @@ nlp2.add_pipe(BabelnetAnnotator("de"))
 #La prima frase avra' l'insieme dei synset delle sue parole all'indice 0 nella lista, la seconda all'indice 1 etc.
 def createSet_en(enfile):
     sent_en = [] #inizializzo una lista che conterra' le frasi del testo inglese
-    sent_en_2 = [] #inizializzo la lista finale che conterra' le frasi del testo inglese
+    sent_en_2 = [] #inizializzo la lista che conterra' le frasi di tipo stringa del testo inglese
+    sent_en_3 = [] #inizializzo la lista che conterra' le frasi di tipo span del testo inglese
     synset_en = [] #inizializzo le due liste che conterranno gli insieme dei synset di ogni frase del testo inglese
     doc = nlp(enfile.read())
     for s in doc.sents: #Mi salvo ogni frase separatamente all'intero di una lista
         sent_en.append(s)
 
     for sentence, i in zip(sent_en, range(len(sent_en))): #per ogni frase in sent_en
-        if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!]\"?\s*$", str(sentence)): #se la frase non finisce con ".", "?" o "!"
+        if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sentence)): #se la frase non finisce con ".", "?" o "!"
             if len(sent_en_2) != 0: #se la lista non e' vuota
                 if str(sentence) not in str(sent_en_2[len(sent_en_2) - 1]): #e la frase non e' stata ancora aggiunta
                     s = str(sentence) + str(sent_en[i + 1]) #unisci la frase attuale con quella successiva
@@ -37,17 +38,17 @@ def createSet_en(enfile):
         else: #se invece finisce con ".", "?" o "!"
             if len(sent_en_2) != 0: #se la lista non e' vuota
                 if str(sentence) not in str(sent_en_2[len(sent_en_2) - 1]): #e la frase non e' stata ancora aggiunta
-                    if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!]\"?\s*$", str(sent_en_2[len(sent_en_2) - 1])): #se l'ultima frase aggiunta alla lista non finisce con ".", "?" o "!"
+                    if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sent_en_2[len(sent_en_2) - 1])): #se l'ultima frase aggiunta alla lista non finisce con ".", "?" o "!"
                         sent_en_2[len(sent_en_2) - 1] = str(sent_en_2[len(sent_en_2) - 1]) + str(sentence) #unisci a quell'ultima frase la frase attuale
                     else: #se l'ultima frase finisce con ".", "?" o "!"
                         sent_en_2.append(str(sentence)) #aggiungi la frase attuale alla lista
             else: #se la lista e' vuota
                 sent_en_2.append(str(sentence)) #aggiungi la frase alla lista
 
-    # for i in sent_en_2:
-    #     print(str(sent_en_2.index(i) + 1) +") " + str(i))
+    for frase in sent_en_2: #per ogni frase nella nuova lista
+        sent_en_3.append(nlp(frase)) #la faccio diventare span
 
-    for sent in sent_en_2: #per ogni frase nel testo inglese
+    for sent in sent_en_3: #per ogni frase nel testo inglese
         set_en = set() #creo un'insieme in cui si troveranno i synset
         for token in sent: #per ogni parola nella frase
             if str(token) not in stopwordsEN: #se non e' una stopword
@@ -55,7 +56,7 @@ def createSet_en(enfile):
                     set_en.add(str(synset.getID())) #aggiungo l'ID del synset nell'insieme
         synset_en.append(set_en) #aggiungo l'insieme degli id dei synset della parola nella lista
 
-    return sent_en_2, synset_en
+    return sent_en_3, synset_en
 
 
 #Il metodo createSet_de crea una lista di insiemi che contengono i synset di ciascuna frase del testo tedesco
@@ -63,13 +64,14 @@ def createSet_en(enfile):
 def createSet_de(defile):
     sent_de = [] #inizializzo una liste che conterra' le frasi del testo tedesco
     sent_de_2 = [] #inizializzo la lista finale che conterra' le frasi del testo tedesco
+    sent_de_3 = [] #inizializzo la lista che conterra' le frasi di tipo span del testo tedesco
     synset_de = [] #inizializzo le due liste che conterranno gli insieme dei synset di ogni frase del testo tedesco
     doc = nlp2(defile.read())
     for s in doc.sents: #Mi salvo ogni frase separatamente all'intero di una lista
         sent_de.append(s)
 
     for sentence, i in zip(sent_de, range(len(sent_de))): #per ogni frase in sent_en
-        if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!]\"?\s*$", str(sentence)): #se la frase non finisce con ".", "?" o "!"
+        if not re.match("^^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sentence)): #se la frase non finisce con ".", "?" o "!"
             if len(sent_de_2) != 0: #se la lista non e' vuota
                 if str(sentence) not in str(sent_de_2[len(sent_de_2) - 1]): #e la frase non e' stata ancora aggiunta
                     s = str(sentence) + str(sent_de[i + 1]) #unisci la frase attuale con quella successiva
@@ -81,21 +83,26 @@ def createSet_de(defile):
         else: #se invece finisce con ".", "?" o "!"
             if len(sent_de_2) != 0: #se la lista non e' vuota
                 if str(sentence) not in str(sent_de_2[len(sent_de_2) - 1]): #e la frase non e' stata ancora aggiunta
-                    if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!]\"?\s*$", str(sent_de_2[len(sent_de_2) - 1])): #se l'ultima frase aggiunta alla lista non finisce con ".", "?" o "!"
+                    if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sent_de_2[len(sent_de_2) - 1])): #se l'ultima frase aggiunta alla lista non finisce con ".", "?" o "!"
                         sent_de_2[len(sent_de_2) - 1] = str(sent_de_2[len(sent_de_2) - 1]) + str(sentence) #unisci a quell'ultima frase la frase attuale
                     else: #se l'ultima frase finisce con ".", "?" o "!"
                         sent_de_2.append(str(sentence)) #aggiungi la frase attuale alla lista
             else: #se la lista e' vuota
                 sent_de_2.append(str(sentence)) #aggiungi la frase alla lista
 
-    for sent in sent_de_2: #per ogni frase nel testo tedesco
+    for frase in sent_de_2: #per ogni frase nella nuova lista
+        sent_de_3.append(nlp(frase)) #la faccio diventare span
+
+    for sent in sent_de_3: #per ogni frase nel testo tedesco
         set_de = set() #creo un'insieme in cui si troveranno i synset
         for token in sent: #per ogni parola nella frase
             if str(token) not in stopwordsDE: #se non e' una stopword
                 for synset in token._.babelnet.synsets(): #per ogni synset della parola
                     set_de.add(str(synset.getID())) #aggiungo l'ID del synset nell'insieme
         synset_de.append(set_de) #aggiungo l'insieme degli id dei synset della parola nella lista
-    return sent_de_2, synset_de
+
+    return sent_de_3, synset_de
+
 
 #Il metodo sameSentence ricava la percentuale di similarita' tra la frase inglese e tedesca dei testi dati in input
 def sameSentence(enfile, defile):
