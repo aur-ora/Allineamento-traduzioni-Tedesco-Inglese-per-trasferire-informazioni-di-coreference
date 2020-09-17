@@ -1,6 +1,5 @@
 import spacy
 from spacy_babelnet import BabelnetAnnotator
-from nltk import Tree
 from bs4 import BeautifulSoup
 from pathlib import Path
 import re
@@ -16,37 +15,16 @@ nlp2.add_pipe(BabelnetAnnotator("de"))
 
 #Il metodo createSet_en crea una lista di insiemi che contengono i synset di ciascuna frase del testo inglese
 #La prima frase avra' l'insieme dei synset delle sue parole all'indice 0 nella lista, la seconda all'indice 1 etc.
-def createSet_en(enfile):
+def create_set_en(enfile):
     sent_en = [] #inizializzo una lista che conterra' le frasi del testo inglese
-    sent_en_2 = [] #inizializzo la lista che conterra' le frasi di tipo stringa del testo inglese
-    sent_en_3 = [] #inizializzo la lista che conterra' le frasi di tipo span del testo inglese
+    #sent_en_2 = [] #inizializzo la lista che conterra' le frasi di tipo stringa del testo inglese
+    #sent_en_3 = [] #inizializzo la lista che conterra' le frasi di tipo span del testo inglese
     synset_en = [] #inizializzo le due liste che conterranno gli insieme dei synset di ogni frase del testo inglese
     doc = nlp(enfile.read())
     for s in doc.sents: #Mi salvo ogni frase separatamente all'intero di una lista
         sent_en.append(s)
 
-    for sentence, i in zip(sent_en, range(len(sent_en))): #per ogni frase in sent_en
-        if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sentence)): #se la frase non finisce con ".", "?" o "!"
-            if len(sent_en_2) != 0: #se la lista non e' vuota
-                if str(sentence) not in str(sent_en_2[len(sent_en_2) - 1]): #e la frase non e' stata ancora aggiunta
-                    s = str(sentence) + str(sent_en[i + 1]) #unisci la frase attuale con quella successiva
-                    sent_en_2.append(s) #aggiungi le frasi unite nella lista
-            else: #se la lista e' vuota
-                s = str(sentence) + str(sent_en[i + 1]) #unisci la frase attuale con la successiva
-                sent_en_2.append(s) #aggiungi le frasi unite nella lista
-
-        else: #se invece finisce con ".", "?" o "!"
-            if len(sent_en_2) != 0: #se la lista non e' vuota
-                if str(sentence) not in str(sent_en_2[len(sent_en_2) - 1]): #e la frase non e' stata ancora aggiunta
-                    if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sent_en_2[len(sent_en_2) - 1])): #se l'ultima frase aggiunta alla lista non finisce con ".", "?" o "!"
-                        sent_en_2[len(sent_en_2) - 1] = str(sent_en_2[len(sent_en_2) - 1]) + str(sentence) #unisci a quell'ultima frase la frase attuale
-                    else: #se l'ultima frase finisce con ".", "?" o "!"
-                        sent_en_2.append(str(sentence)) #aggiungi la frase attuale alla lista
-            else: #se la lista e' vuota
-                sent_en_2.append(str(sentence)) #aggiungi la frase alla lista
-
-    for frase in sent_en_2: #per ogni frase nella nuova lista
-        sent_en_3.append(nlp(frase)) #la faccio diventare span
+    sent_en_3 = sentence_splitter(sent_en) #richiamo il metodo che prende la lista delle frasi e ne restituisce un'altra spezzata correttamente
 
     for sent in sent_en_3: #per ogni frase nel testo inglese
         set_en = set() #creo un'insieme in cui si troveranno i synset
@@ -61,37 +39,16 @@ def createSet_en(enfile):
 
 #Il metodo createSet_de crea una lista di insiemi che contengono i synset di ciascuna frase del testo tedesco
 #La prima frase avra' l'insieme dei synset delle sue parole all'indice 0 nella lista, la seconda all'indice 1 etc.
-def createSet_de(defile):
+def create_set_de(defile):
     sent_de = [] #inizializzo una liste che conterra' le frasi del testo tedesco
-    sent_de_2 = [] #inizializzo la lista finale che conterra' le frasi del testo tedesco
-    sent_de_3 = [] #inizializzo la lista che conterra' le frasi di tipo span del testo tedesco
+    #sent_de_2 = [] #inizializzo la lista finale che conterra' le frasi del testo tedesco
+    #sent_de_3 = [] #inizializzo la lista che conterra' le frasi di tipo span del testo tedesco
     synset_de = [] #inizializzo le due liste che conterranno gli insieme dei synset di ogni frase del testo tedesco
     doc = nlp2(defile.read())
     for s in doc.sents: #Mi salvo ogni frase separatamente all'intero di una lista
         sent_de.append(s)
 
-    for sentence, i in zip(sent_de, range(len(sent_de))): #per ogni frase in sent_en
-        if not re.match("^^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sentence)): #se la frase non finisce con ".", "?" o "!"
-            if len(sent_de_2) != 0: #se la lista non e' vuota
-                if str(sentence) not in str(sent_de_2[len(sent_de_2) - 1]): #e la frase non e' stata ancora aggiunta
-                    s = str(sentence) + str(sent_de[i + 1]) #unisci la frase attuale con quella successiva
-                    sent_de_2.append(s) #aggiungi le frasi unite nella lista
-            else: #se la lista e' vuota
-                s = str(sentence) + str(sent_de[i + 1]) #unisci la frase attuale con la successiva
-                sent_de_2.append(s) #aggiungi le frasi unite nella lista
-
-        else: #se invece finisce con ".", "?" o "!"
-            if len(sent_de_2) != 0: #se la lista non e' vuota
-                if str(sentence) not in str(sent_de_2[len(sent_de_2) - 1]): #e la frase non e' stata ancora aggiunta
-                    if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sent_de_2[len(sent_de_2) - 1])): #se l'ultima frase aggiunta alla lista non finisce con ".", "?" o "!"
-                        sent_de_2[len(sent_de_2) - 1] = str(sent_de_2[len(sent_de_2) - 1]) + str(sentence) #unisci a quell'ultima frase la frase attuale
-                    else: #se l'ultima frase finisce con ".", "?" o "!"
-                        sent_de_2.append(str(sentence)) #aggiungi la frase attuale alla lista
-            else: #se la lista e' vuota
-                sent_de_2.append(str(sentence)) #aggiungi la frase alla lista
-
-    for frase in sent_de_2: #per ogni frase nella nuova lista
-        sent_de_3.append(nlp(frase)) #la faccio diventare span
+    sent_de_3 = sentence_splitter(sent_de) #richiamo il metodo che prende la lista delle frasi e ne restituisce un'altra spezzata correttamente
 
     for sent in sent_de_3: #per ogni frase nel testo tedesco
         set_de = set() #creo un'insieme in cui si troveranno i synset
@@ -105,13 +62,13 @@ def createSet_de(defile):
 
 
 #Il metodo sameSentence ricava la percentuale di similarita' tra la frase inglese e tedesca dei testi dati in input
-def sameSentence(enfile, defile):
+def same_sentence(enfile, defile):
     no_simil = []
-    names = getCoreference(enfile.name)
+    names = get_coreference(enfile.name)
     f = open((enfile.name)[:len(enfile.name) - 4] + ".pcr.txt", "r")
     percentuale = 0.21445344259078236
-    sent_en, list_set_en = createSet_en(enfile) #creo la lista degli insiemi dei synset di ciascuna frase inglese
-    sent_de, list_set_de = createSet_de(defile) #creo la lista degli insiemi dei synset di ciascuna frase tedesca
+    sent_en, list_set_en = create_set_en(enfile) #creo la lista degli insiemi dei synset di ciascuna frase inglese
+    sent_de, list_set_de = create_set_de(defile) #creo la lista degli insiemi dei synset di ciascuna frase tedesca
     for i in range(min(len(list_set_de), len(list_set_en))): #prendo le frasi attraverso gli indici della lista
         dep_en = {}
         dep_de = {}
@@ -156,9 +113,10 @@ def sameSentence(enfile, defile):
         # print(dep_de)
     return 0
 
+
 #Il metodo getCoreference prende in input il nome (stringa) del file di interesse (testo inglese) e ricava il file .html
 #che contiene le info sulle coreference del testo e lo salva in formato txt, e ritorna la lista di liste dei nomi ricavati applicando la coreference
-def getCoreference(nameEnfile):
+def get_coreference(nameEnfile):
     nameEnfile = nameEnfile[:len(nameEnfile) - 4] #prendo solo il nome del file senza l'estensione txt
     data_folder = Path("../book-nlp-master/data/output/" + nameEnfile[:nameEnfile.index(".")] + "/" + nameEnfile + ".html") #mi salvo la directory dei file .html ricavati usando un comando di book nlp
     soup = BeautifulSoup(open(data_folder, "r"), features="html.parser") #uso beautiful soup per convertire da html a txt
@@ -190,18 +148,35 @@ def getCoreference(nameEnfile):
     f1.write("".join(lines)) #risalvo il contenuto meno la prima riga nel file che contiene la coreference
     return names #ritorno la lista dei nomi individuati con la coreference
 
-# def tok_format(tok):
-#     return "_".join([tok.orth_, tok.dep_])
-#
-#
-# def to_nltk_tree(node):
-#     if node.n_lefts + node.n_rights > 0:
-#         return Tree(tok_format(node), [to_nltk_tree(child) for child in node.children])
-#     else:
-#         return tok_format(node)
-#
-#
-# def tree2dict(tree):
-#     return {tree.label(): [tree2dict(t) if isinstance(t, Tree) else t for t in tree]}
+
+#Il metodo sentence_splitter prende in input una lista di frasi e sistema le frasi che sono state spezzate male (prima o dopo del dovuto)
+def sentence_splitter(sent):
+    sent_2 = [] #inizializzo la lista che conterra' le frasi come stringhe
+    sent_3 = [] #inizializzo la lista che conterra' le frasi come oggetti span
+
+    for sentence, i in zip(sent, range(len(sent))): #per ogni frase in sent
+        if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sentence)): #se la frase non finisce con ".", "?" o "!"
+            if len(sent_2) != 0: #se la lista non e' vuota
+                if str(sentence) not in str(sent_2[len(sent_2) - 1]): #e la frase non e' stata ancora aggiunta
+                    s = str(sentence) + str(sent[i + 1]) #unisci la frase attuale con quella successiva
+                    sent_2.append(s) #aggiungi le frasi unite nella lista
+            else: #se la lista e' vuota
+                s = str(sentence) + str(sent[i + 1]) #unisci la frase attuale con la successiva
+                sent_2.append(s) #aggiungi le frasi unite nella lista
+
+        else: #se invece finisce con ".", "?" o "!"
+            if len(sent_2) != 0: #se la lista non e' vuota
+                if str(sentence) not in str(sent_2[len(sent_2) - 1]): #e la frase non e' stata ancora aggiunta
+                    if not re.match("^[a-zA-Z\S\s\d\n*]+[.?!](\"|\«)?\s*$", str(sent_2[len(sent_2) - 1])): #se l'ultima frase aggiunta alla lista non finisce con ".", "?" o "!"
+                        sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + str(sentence) #unisci a quell'ultima frase la frase attuale
+                    else: #se l'ultima frase finisce con ".", "?" o "!"
+                        sent_2.append(str(sentence)) #aggiungi la frase attuale alla lista
+            else: #se la lista e' vuota
+                sent_2.append(str(sentence)) #aggiungi la frase alla lista
+
+    for frase in sent_2: #per ogni frase nella nuova lista
+        sent_3.append(nlp(frase)) #la faccio diventare span
+
+    return sent_3 #restituisco la lista delle frasi
 
 
