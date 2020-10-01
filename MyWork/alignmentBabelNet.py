@@ -1,4 +1,5 @@
 import spacy
+import json
 from spacy_babelnet import BabelnetAnnotator
 from bs4 import BeautifulSoup
 from pathlib import Path
@@ -74,9 +75,10 @@ def create_set_de(defile):
 
 # Il metodo same_sentence ricava la percentuale di similarita' tra la frase inglese e tedesca dei testi dati in input
 def same_sentence(enfile, defile):
-    #sentences = []
     sent = []
     sent_core = []
+    with open("pronouns.json") as f:
+        pron = json.load(f)
     # names = get_coreference(enfile.name)  # richiamo il metodo che mi crea il file con le coreference e che mi restituisce la lista dei nomi dei personaggi
     # names = [['Campagna'], ['Leontodon'], ['Prince'], ['Braquemart'], ['Koppels-Bleek'], ['Belovar'], ['Lampusa', 'LAMPUSA'], ['Pulverkopf'], ['Biedenhorn'], ['Chiffon Rouge'], ['Nigromontanus'], ['Otho', 'Brother Otho'], ['Linnreus'], ['La Picousiere'], ['Ehrhardt'], ['Silvia'], ['Ansgar'], ['Erio'], ['Vesta'], ['Deodat'], ['Lampros'], ['Fortunio']]
     names = [['Samana'], ['Vasudeva'], ['Sansara'], ['Siddhartha'], ['Atman'], ['Buddha'], ['Brahman'], ['Kamaswami'],
@@ -113,27 +115,69 @@ def same_sentence(enfile, defile):
         minimo = min(len(list_set_de[i]), len(list_set_en[i]))  # prendo il minimo di lunghezza tra l'insieme dei synset inglesi e tedeschi
 
         if minimo != 0:  # per evitare l'errore di divisione per zero
-            if len(common) / minimo >= perc:  # se la percentuale di somiglianza della frase e' maggiore o uguale a quella di riferimento
-                for token in sent_core[i]:
-                    if (str(token.tag_) == "PRP" or str(token.tag_) == "PRP$" or str(token.pos_) == "PRON") and token.nbor().text == "(":
-                        # print("ECCOLO " + token.text)
-                        parola = str(sent_core[i])[str(sent_core[i]).index(token.nbor().text) + 1: str(sent_core[i]).index(")")]
-                        for token_de in sent_de[i]:
-                            if (str(token_de.tag_) == "PPER" or str(token_de.tag_) == "PPOSAT" or str(token_de.tag_) == "PPOSS" or str(token_de.tag_) == "PRF") and (str(token_de.pos_) == "PRON" or str(token_de.pos_) == "DET"):
-                                print("GERMAN PRONOUN")
-                                print(token_de, token_de.tag_)
-                        for lista in names:
-                            if parola in lista:
-                                print("Dovremmo ricavare prima il pronome corrispondente e se coincide, metto il nome tra parentesi accanto")
-                            else:
-                                print("Dovremmo ricavare prima il pronome corrispondente e poi cercare il synset della parola e trovare quello tedesco corrispondente")
-                        # print(re.match("^\([a-zA-Z\s]+\)$", sent_core[i]))
+            if len(common) / minimo >= perc:  # se la percentuale di somiglianza della frase e' maggiore o uguale a quella di riferimento, dunque una dovrebbe essere la traduzione dell'altra
+                #print(str(sent_core[i]).replace(",", "").replace("\"", "").replace("«", "").replace("`", "").replace("»", "").replace("?", "").replace("!", "").replace(".", "").split(" "))
+                pro_en = []
+                pro_de = []
+                sent_core_de = ""
+                s_de = []
+                for token_de in sent_de[i]:  # per ogni parola nella frase tedesca di indice i
+                    s_de.append(token_de.text)
+                    if (str(token_de.tag_) == "PPER" or str(token_de.tag_) == "PPOSAT" or str(token_de.tag_) == "PPOSS" or str(token_de.tag_) == "PRF") and (str(token_de.pos_) == "PRON" or str(token_de.pos_) == "DET"):
+                        pro_de.append((token_de.text, token_de.i))
 
-            # else:  # se la percentuale di somiglianza della frase e' minore di quella di riferimento
-            #     print("Unire e spezzare le frasi")
-        else:
-            print("Non sono la traduzione")
-    return 1
+                for token in sent_core[i]:  # per ogni parola nella frase inglese con coreference di indice i
+                    if (str(token.tag_) == "PRP" or str(token.tag_) == "PRP$" or str(token.pos_) == "PRON") and token.nbor().text == "(":  # se la parola è un pronome personale, possessivo ed è seguito da una parentesi
+                        # print("ECCOLO " + token.text)
+                        part_sent = str(sent_core[i][token.i:])
+                        #print(str(sent_core[i][token.i:]).index(")"))
+                        parola = part_sent[part_sent.index("(") + 1: part_sent.index(")")]  # prendo la parola tra parentesi
+                        #print(parola)
+                        pro_en.append((token.text, token.i, "(" + parola + ")"))
+
+                y = 0
+                for c in pro_en:
+                    if pro_de[pro_en.index(c)][0] in pron[c[0].lower()]:
+                        s_de.insert(pro_de[pro_en.index(c)][1] + y + 1, c[2])
+                        y += 1
+                                #print(s_de[pro_de[pro_en.index(c)][1]])
+                                # sent_core_de += str(s_de[:pro_de[pro_en.index(c)][1] + 1]) + " " + c[2] + " "
+                                # print("s_de prima")
+                                # print(s_de)
+                                # print("sent_core_de")
+                                # print(sent_core_de)
+                                # s_de = sent_de[i][pro_de[pro_en.index(c)][1] + 1:]
+                                # print("s_de dopo")
+                                # print(s_de)
+
+
+                        # for token_de in sent_de[i]:  # per ogni parola nella frase tedesca di indice i
+                        #     if (str(token_de.tag_) == "PPER" or str(token_de.tag_) == "PPOSAT" or str(token_de.tag_) == "PPOSS" or str(token_de.tag_) == "PRF") and (str(token_de.pos_) == "PRON" or str(token_de.pos_) == "DET"):
+                        #
+                        #         pro_de.append((token_de, k))
+                            #if token_de.text in pron[token.text.lower()]:
+                             #   1
+                                #print(sent_de[i][:str(sent_de[i]).index(token_de.text) + 1])
+                                #print(str(sent_de[i]).replace(",", "").replace("\"", "").replace("«", "").replace("`", "").replace("»", "").replace("?", "").replace("!", "").replace(".", "").split(" "))
+                                # sent_core_de = str(sent_de[i])[:str(sent_de[i]).index(token_de.text) + 1] + " (" + str(parola) + ")" + str(sent_de[i])[str(sent_de[i]).index(token_de.text) + 2:]
+                                #print(sent_core[i])
+                                #print(sent_de[i])
+                                #print(sent_core_de)
+
+        #                 for lista in names:
+        #                     if parola in lista:
+        #                         print("Dovremmo ricavare prima il pronome corrispondente e se coincide, metto il nome tra parentesi accanto")
+        #                     else:
+        #                         print("Dovremmo ricavare prima il pronome corrispondente e poi cercare il synset della parola e trovare quello tedesco corrispondente")
+        #                 # print(re.match("^\([a-zA-Z\s]+\)$", sent_core[i]))
+        #
+        #     # else:  # se la percentuale di somiglianza della frase e' minore di quella di riferimento
+        #     #     print("Unire e spezzare le frasi")
+        # else:
+        #     print("Non sono la traduzione")
+        #print(pro_en)
+        #print(pro_de)
+    return " ".join(s_de)
 
 
 # Il metodo get_coreference prende in input il nome (stringa) del file di interesse (testo inglese) e ricava il file .html
