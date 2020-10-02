@@ -119,7 +119,6 @@ def same_sentence(enfile, defile):
                 #print(str(sent_core[i]).replace(",", "").replace("\"", "").replace("«", "").replace("`", "").replace("»", "").replace("?", "").replace("!", "").replace(".", "").split(" "))
                 pro_en = []
                 pro_de = []
-                sent_core_de = ""
                 s_de = []
                 for token_de in sent_de[i]:  # per ogni parola nella frase tedesca di indice i
                     s_de.append(token_de.text)
@@ -128,29 +127,45 @@ def same_sentence(enfile, defile):
 
                 for token in sent_core[i]:  # per ogni parola nella frase inglese con coreference di indice i
                     if (str(token.tag_) == "PRP" or str(token.tag_) == "PRP$" or str(token.pos_) == "PRON") and token.nbor().text == "(":  # se la parola è un pronome personale, possessivo ed è seguito da una parentesi
-                        # print("ECCOLO " + token.text)
                         part_sent = str(sent_core[i][token.i:])
-                        #print(str(sent_core[i][token.i:]).index(")"))
                         parola = part_sent[part_sent.index("(") + 1: part_sent.index(")")]  # prendo la parola tra parentesi
-                        #print(parola)
                         pro_en.append((token.text, token.i, "(" + parola + ")"))
 
-                y = 0
-                for c in pro_en:
-                    if pro_de[pro_en.index(c)][0] in pron[c[0].lower()]:
-                        s_de.insert(pro_de[pro_en.index(c)][1] + y + 1, c[2])
-                        y += 1
-                                #print(s_de[pro_de[pro_en.index(c)][1]])
-                                # sent_core_de += str(s_de[:pro_de[pro_en.index(c)][1] + 1]) + " " + c[2] + " "
-                                # print("s_de prima")
-                                # print(s_de)
-                                # print("sent_core_de")
-                                # print(sent_core_de)
-                                # s_de = sent_de[i][pro_de[pro_en.index(c)][1] + 1:]
-                                # print("s_de dopo")
-                                # print(s_de)
+                # print(sent_core[i])
+                # print(len(pro_en))
+                # print(pro_en)
+                # print(sent_de[i])
+                # print(len(pro_de))
+                # print(pro_de)
 
+                y = 0  # un contatore che serve per posizione in modo corretto le parole vicino ai pronomi
+                c = 0
+                for j in range(max(len(pro_en), len(pro_de))):
+                    if len(pro_en) == len(pro_de):  # se i pronomi sono di quantità uguale
+                        if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:  # controllo se il pronome tedesco è la traduzione inglese
+                            s_de.insert(pro_de[c][1] + y + 1, pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
+                            y += 1  # aumento il contatore
+                            c += 1
+                        else:
+                            c += 1
+                    elif len(pro_en) > len(pro_de) != 0 and len(pro_en) != 0 and len(pro_de) > c:  # se ci sono più pronomi inglesi di quelli tedeschi
+                        if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:
+                            s_de.insert(pro_de[c][1] + y + 1, pro_en[c][2])
+                            y += 1
+                            c += 1
+                        else:
+                            pro_en.remove(pro_en[c])
+                    else:
+                        if len(pro_en) != 0 and len(pro_de) != 0 and len(pro_en) > c:  # se ci sono meno pronomi inglesi di quelli tedeschi
+                            if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:  # controllo se il pronome tedesco è la traduzione inglese
+                                s_de.insert(pro_de[c][1] + y + 1, pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
+                                y += 1  # aumento il contatore
+                                c += 1
+                            else:
+                                pro_de.remove(pro_de[c])
 
+                print(sent_core[i])
+                print(" ".join(s_de))
                         # for token_de in sent_de[i]:  # per ogni parola nella frase tedesca di indice i
                         #     if (str(token_de.tag_) == "PPER" or str(token_de.tag_) == "PPOSAT" or str(token_de.tag_) == "PPOSS" or str(token_de.tag_) == "PRF") and (str(token_de.pos_) == "PRON" or str(token_de.pos_) == "DET"):
                         #
@@ -177,7 +192,7 @@ def same_sentence(enfile, defile):
         #     print("Non sono la traduzione")
         #print(pro_en)
         #print(pro_de)
-    return " ".join(s_de)
+    return 1
 
 
 # Il metodo get_coreference prende in input il nome (stringa) del file di interesse (testo inglese) e ricava il file .html
