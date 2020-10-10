@@ -88,11 +88,13 @@ def create_set_de(defile):
 
 # Il metodo same_sentence ricava la percentuale di similarita' tra la frase inglese e tedesca dei testi dati in input, e se la similarita' e' maggiore della percentuale
 # allora, se l'originale e' tedesco, ricaviamo le info sulla coreference dal testo tradotto in inglese e le trasferiamo al testo tedesco
-# se e' minore, controlliamo se unendo k frasi prima e/o dopo la frase la similitarita' e' maggiore
+# se l'originale e' inglese, ricaviamo le info sul numero e genere delle parole tedesche,
+# se la similarita' e' minore, controlliamo se unendo k frasi prima e/o dopo la frase la similitarita' e' maggiore
 def same_sentence(enfile, defile):
     sent = []  # inizializzo lista che conterra' le frasi del testo inglese con le coreference
     sent_core = []  # inizializzo lista che conterra' le frasi del testo inglese con le coreference dopo aver sistemato le frasi
-    sent_core_de = []  # inizializzo lista che conterra' le frasi tedesche con le coreference
+    sent_core_de = []
+    gen_sent = []  # lista che conterra' il dizionario delle info sui generi
     with open("pronouns.json") as f:
         pron = json.load(f)  # apro il file che contiene il dizionario con le info sui pronomi dal inglese al tedesco
 
@@ -103,7 +105,6 @@ def same_sentence(enfile, defile):
     for i in range(min(len(list_set_de), len(list_set_en))):  # prendo le frasi attraverso gli indici della lista
         common = list_set_en[i].intersection(list_set_de[i])  # ricavo l'intersezione della coppia di insiemi di synset (inglese e tedesco)
         minimo = min(len(list_set_de[i]), len(list_set_en[i]))  # prendo il minimo di lunghezza tra l'insieme dei synset inglesi e tedeschi
-        gen_sent = []  # lista che conterra' il dizionario delle info sui generi
 
         if minimo != 0:  # per evitare l'errore di divisione per zero
             if len(common) / minimo >= perc:  # se la percentuale di somiglianza della frase e' maggiore o uguale a quella di riferimento, dunque una dovrebbe essere la traduzione dell'altra
@@ -119,16 +120,30 @@ def same_sentence(enfile, defile):
                     for frase in sent_:  # per ogni frase nella nuova lista
                         sent_core.append(nlp(frase))  # la faccio diventare span
 
-                    coref = coreferences(enfile, defile, i, sent_de, sent_core, sent_core_de, pron, names)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco
+                    coref = coreferences(defile, i, sent_de, sent_core, pron, names)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco
+                    sent_core_de.append(coref)
                 else:
                     genus = bio_gender(sent_en, sent_de, tok_syn_en, tok_syn_de, i)  # richiamo il metodo che si occupa di trovare i generi dei sostantivi inglesi
                     gen_sent.append(genus)
             else:  # se la percentuale di somiglianza della frase e' minore di quella di riferimento
                 unify = join_sentences(sent_en, sent_de, i)  # richiamo il metodo che si occupa di unire le frasi che potrebbe essere state spezzate in piu' frasi
+
+    enfile_name = enfile.name
+    f1 = open(enfile_name[:len(enfile_name) - 4] + ".gbg.txt", "w")  # apro un file con il nome del file + gbg che corrisponde a grammatical biological gender
+    for li in gen_sent:
+        f1.write(str(li))  # mi salvo per ciascuna frase il dizionario delle parole con le info nel file f
+    f1.close()
+
+    defile_name = defile.name
+    f2 = open(defile_name[:len(defile_name) - 4] + ".pcr.txt", "w") # apro un file con il nome del file + pcr che corrisponde a pronominal coreference
+    for riga in sent_core_de:
+        f2.write(str(riga))
+    f2.close()
+
     return 1
 
 
-# Il metodo bio_gender da' un genere biologico al sostantivo inglese, in base alle regole della grammatica tedesca
+# Il metodo bio_gender prende una frase e da' un genere biologico al sostantivo inglese, in base alle regole della grammatica tedesca
 def bio_gender(sent_en, sent_de, tok_syn_en, tok_syn_de, i):
     m = ["ling", "ich", "ig", "ant", "ent", "eur", "ist", "ismus", "or"]  # alcuni sostantivi maschili terminano cosi'
     f = ["schaft", "tät", "taet", "ik", "ung", "ion", "heit", "keit", "ei", "kunft", "falt", "t", "ade", "age", "anz", "ur"]  # alcuni sostantivi femminili terminano cosi'
@@ -229,15 +244,18 @@ def gram_gender(sent_de, i, token, en_info, translation):
     else:  # se non c'e'
         return "grammatically unknown"  # allora e' grammaticalmente sconosciuto
 
+
 # Il metodo join_sentences controlla le frasi che sono state spezzate, e le unisce per allinearsi con la propria traduzione
 def join_sentences(sent_en, sent_de, i):
     return 1
 
 
-def coreferences(enfile, defile, i, sent_de, sent_core, sent_core_de, pron, names):
+# Il metodo coreferences aggiunge ai pronomi tedeschi la persona a cui si riferiscono (pronominal coreference) in base al testo inglese con le coreference
+def coreferences(defile, i, sent_de, sent_core, pron, names):
     pro_en = []  # lista che conterra' una tripla (pronome inglese, indice, parola)
     pro_de = []  # lista che conterra' la tupla (pronome tedesco, indice)
     s_de = []  # lista che conterra' tutte le parole del testo insieme ad eventuali info sulle coreference
+    sent_core_de = []  # inizializzo lista che conterra' le frasi tedesche con le coreference
 
     for token_de in sent_de[i]:  # per ogni parola nella frase tedesca di indice i
         s_de.append(token_de.text)  # aggiungo la parola alla lista
@@ -250,15 +268,13 @@ def coreferences(enfile, defile, i, sent_de, sent_core, sent_core_de, pron, name
         if (str(token.tag_) == "PRP" or str(token.tag_) == "PRP$" or str(
                 token.pos_) == "PRON") and token.nbor().text == "(":  # se la parola e' un pronome personale, possessivo ed e' seguito da una parentesi
             part_sent = str(sent_core[i][token.i:])  # prendo tutta la frase a partire dal pronome corrente e la salvo
-            parola = part_sent[part_sent.index("(") + 1: part_sent.index(
-                ")")]  # prendo la parola tra parentesi alla destra del pronome e la salvo
-            if parola in chain(*names):  # se la parola e' un nome proprio e quindi molto probabilmente non varia dall'inglese al tedesco
-                pro_en.append((token.text, token.i,
-                               "(" + parola + ")"))  # aggiungo alla lista la tripla di pronome indice e parola
-            else:  # se invece e' un nome comune
-                translator = Translator(from_lang='en', to_lang='de')  # uso la libreria per ricavarmi la traduzione
-                translation = translator.translate(parola)  # da inglese a tedesco
-                pro_en.append((token.text, token.i, "(" + translation + ")"))  # aggiungo alla lista la tripla di pronome indice e parola
+            parola = part_sent[part_sent.index("(") + 1: part_sent.index(")")]  # prendo la parola tra parentesi alla destra del pronome e la salvo
+            #if parola in chain(*names):  # se la parola e' un nome proprio e quindi molto probabilmente non varia dall'inglese al tedesco
+            pro_en.append((token.text, token.i, "(" + parola + ")"))  # aggiungo alla lista la tripla di pronome indice e parola
+            #else:  # se invece e' un nome comune
+                # translator = Translator(from_lang='en', to_lang='de')  # uso la libreria per ricavarmi la traduzione
+                # translation = translator.translate(parola)  # da inglese a tedesco
+                #pro_en.append((token.text, token.i, "(" + parola + ")"))  # aggiungo alla lista la tripla di pronome indice e parola
 
     y = 0  # un contatore che serve per posizione in modo corretto le parole vicino ai pronomi
     c = 0  # contatore per prendere il pronome giusto dalla lista
@@ -274,8 +290,7 @@ def coreferences(enfile, defile, i, sent_de, sent_core, sent_core_de, pron, name
         elif len(pro_en) > len(pro_de) != 0 and len(pro_en) != 0 and len(
                 pro_de) > c:  # se ci sono piu' pronomi inglesi di quelli tedeschi
             if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:  # controllo se il pronome tedesco e' la traduzione inglese
-                s_de.insert(pro_de[c][1] + y + 1,
-                            pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
+                s_de.insert(pro_de[c][1] + y + 1, pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
                 y += 1  # aumento il contatore
                 c += 1  # aumento il contatore
             else:  # se non sono una la traduzione dell'altro
@@ -283,28 +298,15 @@ def coreferences(enfile, defile, i, sent_de, sent_core, sent_core_de, pron, name
         elif 0 != len(pro_de) > len(pro_en) > c and len(
                 pro_en) != 0:  # se ci sono meno pronomi inglesi di quelli tedeschi
             if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:  # controllo se il pronome tedesco e' la traduzione inglese
-                s_de.insert(pro_de[c][1] + y + 1,
-                            pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
+                s_de.insert(pro_de[c][1] + y + 1, pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
                 y += 1  # aumento il contatore
                 c += 1  # aumento il contatore
             else:  # se non sono una la traduzione dell'altro
                 pro_de.remove(pro_de[c])  # elimino il pronome che non ha la traduzione
 
-    sent_core_de.append(" ".join(s_de).replace(" ,", ",").replace(" .", "."))
+    sent_core_de.append(" ".join(s_de).replace(" ,", ",").replace(" .", "."))  # aggiungo alla lista la stringa contenente la coreference
 
-    defile_name = defile.name
-    f = open(defile_name[:len(defile_name) - 4] + ".pcr.txt", "w")
-    for riga in sent_core_de:
-        if sent_core_de.index(riga) == 0:
-            f.write("[")
-            f.write(str([riga]) + ", ")
-        if sent_core_de.index(riga) == len(sent_core_de) - 1:
-            f.write(str([riga]))
-            f.write("]")
-        else:
-            f.write(str([riga]) + ", ")
-
-    return 1
+    return sent_core_de
 
 
 # Il metodo get_coreference prende in input il nome (stringa) del file di interesse (testo inglese) e ricava il file .html
