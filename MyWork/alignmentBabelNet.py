@@ -4,6 +4,8 @@ from spacy_babelnet import BabelnetAnnotator
 from bs4 import BeautifulSoup
 from pathlib import Path
 import re
+from itertools import chain
+from translate import Translator
 
 stopwordsEN = "".join(open("english-stop-words-large.txt", "r").readlines())  # carico il file delle stopword inglesi
 stopwordsDE = "".join(open("german-stop-words.txt", "r").readlines())  # carico il file delle stopword tedesche
@@ -20,29 +22,33 @@ def create_set_en(enfile):
     sent_en = []  # inizializzo una lista che conterra' le frasi del testo inglese
     sent_en_3 = []  # inizializzo la lista che conterra' le frasi come oggetti span
     synset_en = []  # inizializzo le due liste che conterranno gli insieme dei synset di ogni frase del testo inglese
+    tok_syn_en = []  # inizializzo la lista che conterra' i dizionario dei sostantivi con i synset
     doc = nlp(enfile.read())
     for s in doc.sents:  # Mi salvo ogni frase separatamente all'intero di una lista
         sent_en.append(s)
 
-    # for i in sent_en:
-    #     print(str(sent_en.index(i) + 1) + ". " + str(i))
-
-    sent_en_2 = sentence_splitter(
-        sent_en)  # richiamo il metodo che prende la lista delle frasi e ne restituisce un'altra spezzata correttamente
+    sent_en_2 = sentence_splitter(sent_en)  # richiamo il metodo che prende la lista delle frasi e ne restituisce un'altra spezzata correttamente
 
     for frase in sent_en_2:  # per ogni frase nella nuova lista
         sent_en_3.append(nlp(frase))  # la faccio diventare span
 
     for sent in sent_en_3:  # per ogni frase nel testo inglese
+        d = {}  # inizializzo il dizionario che avra' come chiave un sostantivo e come valore la lista dei suoi synset
         set_en = set()  # creo un'insieme in cui si troveranno i synset
         for token in sent:  # per ogni parola nella frase
             if str(token) not in stopwordsEN:  # se non e' una stopword
                 synsets = token._.babelnet.synsets()
+                if str(token.pos_) == "NOUN":  # se il token e' un sostantivo
+                    s = []
+                    for synset in synsets:
+                        s.append(str(synset.getID()))
+                    d[str(token)] = s  # aggiungilo al dizionario insieme alla lista dei synset
                 for synset in synsets:  # per ogni synset della parola
                     set_en.add(str(synset.getID()))  # aggiungo l'ID del synset nell'insieme
         synset_en.append(set_en)  # aggiungo l'insieme degli id dei synset della parola nella lista
+        tok_syn_en.append(d)  # aggiungi il dizionario alla lista
 
-    return sent_en_3, synset_en
+    return sent_en_3, synset_en, tok_syn_en
 
 
 # Il metodo create_set_de crea una lista di insiemi che contengono i synset di ciascuna frase del testo tedesco
@@ -51,147 +57,253 @@ def create_set_de(defile):
     sent_de = []  # inizializzo una liste che conterra' le frasi del testo tedesco
     sent_de_3 = []  # inizializzo la lista che conterra' le frasi come oggetti span
     synset_de = []  # inizializzo le due liste che conterranno gli insieme dei synset di ogni frase del testo tedesco
+    tok_syn_de = []  # inizializzo la lista che conterra' i dizionario dei sostantivi con i synset
     doc = nlp2(defile.read())
     for s in doc.sents:  # Mi salvo ogni frase separatamente all'intero di una lista
         sent_de.append(s)
 
-    sent_de_2 = sentence_splitter(
-        sent_de)  # richiamo il metodo che prende la lista delle frasi e ne restituisce un'altra spezzata correttamente
+    sent_de_2 = sentence_splitter(sent_de)  # richiamo il metodo che prende la lista delle frasi e ne restituisce un'altra spezzata correttamente
 
     for frase in sent_de_2:  # per ogni frase nella nuova lista
         sent_de_3.append(nlp2(frase))  # la faccio diventare span
 
     for sent in sent_de_3:  # per ogni frase nel testo tedesco
+        d = {}  # inizializzo il dizionario che avra' come chiave un sostantivo e come valore la lista dei suoi synset
         set_de = set()  # creo un'insieme in cui si troveranno i synset
         for token in sent:  # per ogni parola nella frase
             if str(token) not in stopwordsDE:  # se non e' una stopword
                 synsets = token._.babelnet.synsets()
+                if str(token.pos_) == "NOUN":  # se il token e' un sostantivo
+                    s = []
+                    for synset in synsets:
+                        s.append(str(synset.getID()))
+                    d[str(token)] = s  # aggiungilo al dizionario insieme alla lista dei synset
                 for synset in synsets:  # per ogni synset della parola
                     set_de.add(str(synset.getID()))  # aggiungo l'ID del synset nell'insieme
         synset_de.append(set_de)  # aggiungo l'insieme degli id dei synset della parola nella lista
+        tok_syn_de.append(d)  # aggiungi il dizionario alla lista
 
-    return sent_de_3, synset_de
+    return sent_de_3, synset_de, tok_syn_de
 
 
-# Il metodo same_sentence ricava la percentuale di similarita' tra la frase inglese e tedesca dei testi dati in input
+# Il metodo same_sentence ricava la percentuale di similarita' tra la frase inglese e tedesca dei testi dati in input, e se la similarita' e' maggiore della percentuale
+# allora, se l'originale e' tedesco, ricaviamo le info sulla coreference dal testo tradotto in inglese e le trasferiamo al testo tedesco
+# se e' minore, controlliamo se unendo k frasi prima e/o dopo la frase la similitarita' e' maggiore
 def same_sentence(enfile, defile):
-    sent = []
-    sent_core = []
+    sent = []  # inizializzo lista che conterra' le frasi del testo inglese con le coreference
+    sent_core = []  # inizializzo lista che conterra' le frasi del testo inglese con le coreference dopo aver sistemato le frasi
+    sent_core_de = []  # inizializzo lista che conterra' le frasi tedesche con le coreference
     with open("pronouns.json") as f:
-        pron = json.load(f)
-    # names = get_coreference(enfile.name)  # richiamo il metodo che mi crea il file con le coreference e che mi restituisce la lista dei nomi dei personaggi
-    # names = [['Campagna'], ['Leontodon'], ['Prince'], ['Braquemart'], ['Koppels-Bleek'], ['Belovar'], ['Lampusa', 'LAMPUSA'], ['Pulverkopf'], ['Biedenhorn'], ['Chiffon Rouge'], ['Nigromontanus'], ['Otho', 'Brother Otho'], ['Linnreus'], ['La Picousiere'], ['Ehrhardt'], ['Silvia'], ['Ansgar'], ['Erio'], ['Vesta'], ['Deodat'], ['Lampros'], ['Fortunio']]
-    names = [['Samana'], ['Vasudeva'], ['Sansara'], ['Siddhartha'], ['Atman'], ['Buddha'], ['Brahman'], ['Kamaswami'],
-             ['Govinda'], ['Gotama'], ['Kamala'], ['Samanas']]
-    f = open(enfile.name[:len(enfile.name) - 4] + ".pcr.txt", "r")  # apro il file appena creato
-    doc = nlp(f.read())
-    for s in doc.sents:  # divido il testo in frasi
-        sent.append(s)  # e le salvo in una lista
+        pron = json.load(f)  # apro il file che contiene il dizionario con le info sui pronomi dal inglese al tedesco
 
-    sent_ = sentence_splitter_coref(sent)  # richiamo il metodo che mi ridivide in modo corretto le frasi
-
-    for frase in sent_:  # per ogni frase nella nuova lista
-        sent_core.append(nlp(frase))  # la faccio diventare span
-
-    percentuale = 0.21445344259078236  # la percentuale di riferimento calcolata precedentemente
-    perc = 0.28898147455983053  # la percentuale di riferimento calcolata precedentemente -> dopo aver ricalcolato le percentuali
-    sent_en, list_set_en = create_set_en(enfile)  # creo la lista degli insiemi dei synset di ciascuna frase inglese
-    sent_de, list_set_de = create_set_de(defile)  # creo la lista degli insiemi dei synset di ciascuna frase tedesca
-
-    # print("sent_core")
-    # for i in range(len(sent_core)):
-    #     print(str(i + 1) + ")" + str(sent_core[i]))
-    #
-    # print("sent_en")
-    # for i in range(len(sent_en)):
-    #     print(str(i + 1) + ")" + str(sent_en[i]))
-    #
-    # print("sent_de")
-    # for i in range(len(sent_de)):
-    #     print(str(i + 1) + ")" + str(sent_de[i]))
+    perc = 0.25214495649278257  # 0.28898147455983053  # la percentuale di riferimento calcolata precedentemente -> dopo aver ricalcolato le percentuali
+    sent_en, list_set_en, tok_syn_en = create_set_en(enfile)  # prendo la lista di frasi e la lista degli insiemi dei synset di ciascuna frase inglese e la lista dei dizionari dei synset dei sostantivi inglesi
+    sent_de, list_set_de, tok_syn_de = create_set_de(defile)  # prendo la lista di frasi e la lista degli insiemi dei synset di ciascuna frase tedesca e la lista dei dizionari dei synset dei sostantivi tedeschi
 
     for i in range(min(len(list_set_de), len(list_set_en))):  # prendo le frasi attraverso gli indici della lista
         common = list_set_en[i].intersection(list_set_de[i])  # ricavo l'intersezione della coppia di insiemi di synset (inglese e tedesco)
         minimo = min(len(list_set_de[i]), len(list_set_en[i]))  # prendo il minimo di lunghezza tra l'insieme dei synset inglesi e tedeschi
+        gen_sent = []  # lista che conterra' il dizionario delle info sui generi
 
         if minimo != 0:  # per evitare l'errore di divisione per zero
             if len(common) / minimo >= perc:  # se la percentuale di somiglianza della frase e' maggiore o uguale a quella di riferimento, dunque una dovrebbe essere la traduzione dell'altra
-                #print(str(sent_core[i]).replace(",", "").replace("\"", "").replace("«", "").replace("`", "").replace("»", "").replace("?", "").replace("!", "").replace(".", "").split(" "))
-                pro_en = []
-                pro_de = []
-                s_de = []
-                for token_de in sent_de[i]:  # per ogni parola nella frase tedesca di indice i
-                    s_de.append(token_de.text)
-                    if (str(token_de.tag_) == "PPER" or str(token_de.tag_) == "PPOSAT" or str(token_de.tag_) == "PPOSS" or str(token_de.tag_) == "PRF") and (str(token_de.pos_) == "PRON" or str(token_de.pos_) == "DET"):
-                        pro_de.append((token_de.text, token_de.i))
+                if str(defile.name).startswith("de"):
+                    f = open(enfile.name[:len(enfile.name) - 4] + ".pcr.txt", "r")  # apro il file appena creato
+                    names = get_coreference(enfile.name)  # richiamo il metodo che mi crea il file con le coreference e che mi restituisce la lista dei nomi dei personaggi
+                    doc = nlp(f.read())
+                    for s in doc.sents:  # divido il testo in frasi
+                        sent.append(s)  # e le salvo in una lista
 
-                for token in sent_core[i]:  # per ogni parola nella frase inglese con coreference di indice i
-                    if (str(token.tag_) == "PRP" or str(token.tag_) == "PRP$" or str(token.pos_) == "PRON") and token.nbor().text == "(":  # se la parola è un pronome personale, possessivo ed è seguito da una parentesi
-                        part_sent = str(sent_core[i][token.i:])
-                        parola = part_sent[part_sent.index("(") + 1: part_sent.index(")")]  # prendo la parola tra parentesi
-                        pro_en.append((token.text, token.i, "(" + parola + ")"))
+                    sent_ = sentence_splitter_coref(sent)  # richiamo il metodo che mi ridivide in modo corretto le frasi
 
-                # print(sent_core[i])
-                # print(len(pro_en))
-                # print(pro_en)
-                # print(sent_de[i])
-                # print(len(pro_de))
-                # print(pro_de)
+                    for frase in sent_:  # per ogni frase nella nuova lista
+                        sent_core.append(nlp(frase))  # la faccio diventare span
 
-                y = 0  # un contatore che serve per posizione in modo corretto le parole vicino ai pronomi
-                c = 0
-                for j in range(max(len(pro_en), len(pro_de))):
-                    if len(pro_en) == len(pro_de):  # se i pronomi sono di quantità uguale
-                        if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:  # controllo se il pronome tedesco è la traduzione inglese
-                            s_de.insert(pro_de[c][1] + y + 1, pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
-                            y += 1  # aumento il contatore
-                            c += 1
-                        else:
-                            c += 1
-                    elif len(pro_en) > len(pro_de) != 0 and len(pro_en) != 0 and len(pro_de) > c:  # se ci sono più pronomi inglesi di quelli tedeschi
-                        if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:
-                            s_de.insert(pro_de[c][1] + y + 1, pro_en[c][2])
-                            y += 1
-                            c += 1
-                        else:
-                            pro_en.remove(pro_en[c])
-                    else:
-                        if len(pro_en) != 0 and len(pro_de) != 0 and len(pro_en) > c:  # se ci sono meno pronomi inglesi di quelli tedeschi
-                            if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:  # controllo se il pronome tedesco è la traduzione inglese
-                                s_de.insert(pro_de[c][1] + y + 1, pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
-                                y += 1  # aumento il contatore
-                                c += 1
-                            else:
-                                pro_de.remove(pro_de[c])
+                    coref = coreferences(enfile, defile, i, sent_de, sent_core, sent_core_de, pron, names)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco
+                else:
+                    genus = bio_gender(sent_en, sent_de, tok_syn_en, tok_syn_de, i)  # richiamo il metodo che si occupa di trovare i generi dei sostantivi inglesi
+                    gen_sent.append(genus)
+            else:  # se la percentuale di somiglianza della frase e' minore di quella di riferimento
+                unify = join_sentences(sent_en, sent_de, i)  # richiamo il metodo che si occupa di unire le frasi che potrebbe essere state spezzate in piu' frasi
+    return 1
 
-                print(sent_core[i])
-                print(" ".join(s_de))
-                        # for token_de in sent_de[i]:  # per ogni parola nella frase tedesca di indice i
-                        #     if (str(token_de.tag_) == "PPER" or str(token_de.tag_) == "PPOSAT" or str(token_de.tag_) == "PPOSS" or str(token_de.tag_) == "PRF") and (str(token_de.pos_) == "PRON" or str(token_de.pos_) == "DET"):
-                        #
-                        #         pro_de.append((token_de, k))
-                            #if token_de.text in pron[token.text.lower()]:
-                             #   1
-                                #print(sent_de[i][:str(sent_de[i]).index(token_de.text) + 1])
-                                #print(str(sent_de[i]).replace(",", "").replace("\"", "").replace("«", "").replace("`", "").replace("»", "").replace("?", "").replace("!", "").replace(".", "").split(" "))
-                                # sent_core_de = str(sent_de[i])[:str(sent_de[i]).index(token_de.text) + 1] + " (" + str(parola) + ")" + str(sent_de[i])[str(sent_de[i]).index(token_de.text) + 2:]
-                                #print(sent_core[i])
-                                #print(sent_de[i])
-                                #print(sent_core_de)
 
-        #                 for lista in names:
-        #                     if parola in lista:
-        #                         print("Dovremmo ricavare prima il pronome corrispondente e se coincide, metto il nome tra parentesi accanto")
-        #                     else:
-        #                         print("Dovremmo ricavare prima il pronome corrispondente e poi cercare il synset della parola e trovare quello tedesco corrispondente")
-        #                 # print(re.match("^\([a-zA-Z\s]+\)$", sent_core[i]))
-        #
-        #     # else:  # se la percentuale di somiglianza della frase e' minore di quella di riferimento
-        #     #     print("Unire e spezzare le frasi")
-        # else:
-        #     print("Non sono la traduzione")
-        #print(pro_en)
-        #print(pro_de)
+# Il metodo bio_gender da' un genere biologico al sostantivo inglese, in base alle regole della grammatica tedesca
+def bio_gender(sent_en, sent_de, tok_syn_en, tok_syn_de, i):
+    m = ["ling", "ich", "ig", "ant", "ent", "eur", "ist", "ismus", "or"]  # alcuni sostantivi maschili terminano cosi'
+    f = ["schaft", "tät", "taet", "ik", "ung", "ion", "heit", "keit", "ei", "kunft", "falt", "t", "ade", "age", "anz", "ur"]  # alcuni sostantivi femminili terminano cosi'
+    n = ["chen", "lein", "ment", "um", "ma", "o", "nis"]  # alcuni sostantivi neutrali terminano cosi'
+    p = ["en", "e", "n", "s", "er"]  # alcuni sostantivi in plurale terminano cosi'
+
+    maskulin = "".join(open("maskulin.txt", "r").readlines())  # salvo in una lista alcuni sostantivi maschili
+    feminin = "".join(open("feminin.txt", "r").readlines())  # salvo in una lista alcuni sostantivi femminili
+    neutrum = "".join(open("neutrum.txt", "r").readlines())  # salvo in una lista alcuni sostantivi neutrali
+    plural = "".join(open("plural.txt", "r").readlines())  # salvo in una lista alcuni sostantivi che esistono solo in plurale o che sono uguali al singolare
+
+    en_info = {}  # dizionario che conterra' le info sul genere collegate alla parola inglese
+
+    for token in sent_de[i]:  # per ogni parola tedesca nella frase
+        if str(token.pos_) == "NOUN":  # se la parola e' un sostantivo
+            translation = ""  # inizializzo la stringa della traduzione
+            syns = tok_syn_de[i][str(token)]  # ricavo la lista dei synset della parola tedesca
+            for syn in syns:  # per ogni synset
+                for key, value in tok_syn_en[i].items():  # per ogni parola e ogni lista di synset del dizionario inglese
+                    if syn in value:  # se il synset della parola tedesca si trova in una lista di synset delle parole inglesi
+                        translation = key  # prendi la parola inglese
+
+            if str(token) in plural or str(token).endswith(tuple(p)) and str(token) != str(token.lemma_):  # se sta nella lista dei plurai oppure finisce in un certo modo e il lemma e' diverso (il lemma sara' il singolare)
+                if translation != "":  # se c'e' la traduzione
+                    en_info[translation] = ["plural"]  # allora aggiungi al dizionario l'informazione del plurale
+
+            if str(token.lemma_).endswith(tuple(m)) or str(token.lemma_) in maskulin:  # se finisce con qualcosa in m o sta nella lista dei maschili
+                if translation != "":  # se c'e' la traduzione
+                    if translation in en_info.keys():  # se c'e' gia' la parola (cioe' e' plurale)
+                        en_info[translation].append("biologically male")  # aggiungi alla lista che e' biologicamente maschile
+                    else:  # se non c'e' gia' nel dizionario (non e' plurale)
+                        en_info[translation] = ["biologically male"]  # aggiungi la parola al dizionario con l'info che e' biologicamente maschile
+                    en_info[translation].append(gram_gender(sent_de, i, token, en_info, translation))  # aggiungo alla lista della info il genere grammaticale richiamando il metodo gram_gender
+
+            elif str(token.lemma_).endswith(tuple(f)) or str(token.lemma_) in feminin:  # se finisce con qualcosa in f o sta nella lista dei femminili
+                if translation != "":  # se c'e' la traduzione
+                    if translation in en_info.keys():  # se c'e' gia' la parola (cioe' e' plurale)
+                        en_info[translation].append("biologically female")  # aggiungi alla lista che e' biologicamente femminile
+                    else:  # se non c'e' gia' nel dizionario (non e' plurale)
+                        en_info[translation] = ["biologically female"]  # aggiungi la parola al dizionario con l'info che e' biologicamente femminile
+                    en_info[translation].append(gram_gender(sent_de, i, token, en_info, translation))  # aggiungo alla lista della info il genere grammaticale richiamando il metodo gram_gender
+
+            elif str(token.lemma_).endswith(tuple(n)) or str(token.lemma_) in neutrum:  # se e' un sostantivo neutro
+                if translation != "":  # se c'e' la traduzione
+                    if translation in en_info.keys():  # se c'e' gia' la parola (cioe' e' plurale)
+                        en_info[translation].append("biologically undetermined")  # aggiungi alla lista che e' biologicamente indeterminato
+                    else:  # se non c'e' gia' nel dizionario (non e' plurale)
+                        en_info[translation] = ["biologically undetermined"]  # aggiungi la parola al dizionario con l'info che e' biologicamente indeterminato
+                    en_info[translation].append(gram_gender(sent_de, i, token, en_info, translation))  # aggiungo alla lista della info il genere grammaticale richiamando il metodo gram_gender
+
+            else:  # se non rientra in nessuno dei casi sopra
+                if translation != "":  # se c'e' la traduzione
+                    if translation in en_info.keys():  # se c'e' gia' la parola (cioe' e' plurale)
+                        en_info[translation].append("biologically unknown")  # aggiungi alla lista che e' biologicamente sconosciuto
+                    else:  # se non c'e' gia' nel dizionario (non e' plurale)
+                        en_info[translation] = ["biologically unknown"]  # aggiungi la parola al dizionario con l'info che e' biologicamente sconosciuto
+                    en_info[translation].append(gram_gender(sent_de, i, token, en_info, translation))  # aggiungo alla lista della info il genere grammaticale richiamando il metodo gram_gender
+    return en_info
+
+
+# Il metodo gram_gender da' al sostantivo un genere grammaticale in base all'articolo dal quale e' preceduto
+def gram_gender(sent_de, i, token, en_info, translation):
+    art_m = ["der", "des", "dem", "den", "ein", "eines", "einem", "einen", "jeder"]  # articoli per i sostantivi maschili
+    art_f = ["die", "der", "eine", "einer", "jede"]  # articoli per i sostantivi femminili
+    art_n = ["das", "des", "dem", "das", "ein", "eines", "einem", "jedes"]  # articoli per i sostantivi neutri
+    art_p = ["die", "der", "den", "die"]  # articoli per il plurale
+
+    if str(sent_de[i][token.i - 1]).lower() in list(set(art_m) & set(art_n)) or str(sent_de[i][token.i - 2]).lower() in list(set(art_m) & set(art_n)):  # ci sono alcuni articoli in comune quindi
+        if en_info[translation][0].split(" ")[1] == "male":  # se la parola e' biologicamente maschile
+            return "grammatical masculine"  # allora lo e' anche grammaticalmente
+        elif en_info[translation][0].split(" ")[1] == "undetermined":  # se la parola e' biologicamente indefinita
+            return "grammatically neutral"  # allora e' grammaticalmente neutro
+
+    if str(sent_de[i][token.i - 1]).lower() in list(set(art_m) & set(art_f)) or str(sent_de[i][token.i - 2]).lower() in list(set(art_m) & set(art_f)):  # ci sono alcuni articoli in comune quindi
+        if en_info[translation][0].split(" ")[1] == "male":  # se la parola e' biologicamente maschile
+            return "grammatical masculine"  # allora lo e' anche grammaticalmente
+        elif en_info[translation][0].split(" ")[1] == "female":  # se la parola e' biologicamente femminile
+            return "grammatically feminine"  # allora lo e' anche grammaticalmente
+
+    if en_info[translation][0] == "plural" and (str(sent_de[i][token.i - 1]).lower() in art_p or str(sent_de[i][token.i - 2]).lower() in art_p):  # se la parola e' plurale ed e' preceduta da un atricolo in art_p
+        if en_info[translation][1].split(" ")[1] == "male":  # se e' biologicamente maschile
+            return "grammatical masculine"  # allora e' grammaticalmente maschile (poiche' l'articolo e' diverso tra plurale e singolare)
+        elif en_info[translation][1].split(" ")[1] == "undetermined":  # se e' biologicamente indeterminato
+            return "grammatically neutral"  # allora e' grammaticalmente neutrale (poiche' l'articolo e' diverso tra plurale e singolare)
+        elif en_info[translation][1].split(" ")[1] == "female":  # se e' biologicamente femminile
+            return "grammatically feminine"  # allora e' grammaticalmente femminile (poiche' l'articolo e' diverso tra plurale e singolare)
+        else:  # se e' biologicamente sconosciuto
+            return "grammatically unknown"  # allora e' grammaticalmente sconosciuto (poiche' l'articolo e' diverso tra plurale e singolare)
+
+    if str(sent_de[i][token.i - 1]).lower() in art_f or str(sent_de[i][token.i - 2]).lower() in art_f:  # se l'articolo prima si trova in art_f
+        return "grammatical feminine"  # allora e' grammaticalmente femminile
+
+    elif str(sent_de[i][token.i - 1]).lower() in art_m or str(sent_de[i][token.i - 2]).lower() in art_m:  # se l'articolo prima si trova in art_m
+        return "grammatical masculine"  # allora e' grammaticalmente maschile
+
+    elif str(sent_de[i][token.i - 1]).lower() in art_n or str(sent_de[i][token.i - 2]).lower() in art_n:  # se l'articolo prima si trova in art_n
+        return "grammatically neutral"  # allora e' grammaticalmente neutrale
+    else:  # se non c'e'
+        return "grammatically unknown"  # allora e' grammaticalmente sconosciuto
+
+# Il metodo join_sentences controlla le frasi che sono state spezzate, e le unisce per allinearsi con la propria traduzione
+def join_sentences(sent_en, sent_de, i):
+    return 1
+
+
+def coreferences(enfile, defile, i, sent_de, sent_core, sent_core_de, pron, names):
+    pro_en = []  # lista che conterra' una tripla (pronome inglese, indice, parola)
+    pro_de = []  # lista che conterra' la tupla (pronome tedesco, indice)
+    s_de = []  # lista che conterra' tutte le parole del testo insieme ad eventuali info sulle coreference
+
+    for token_de in sent_de[i]:  # per ogni parola nella frase tedesca di indice i
+        s_de.append(token_de.text)  # aggiungo la parola alla lista
+        if (str(token_de.tag_) == "PPER" or str(token_de.tag_) == "PPOSAT" or str(token_de.tag_) == "PPOSS" or str(
+                token_de.tag_) == "PRF") and (
+                str(token_de.pos_) == "PRON" or str(token_de.pos_) == "DET"):  # se la parola e' un pronome
+            pro_de.append((token_de.text, token_de.i))  # lo aggiungo alla lista di tuple insieme all'indice
+
+    for token in sent_core[i]:  # per ogni parola nella frase inglese con coreference di indice i
+        if (str(token.tag_) == "PRP" or str(token.tag_) == "PRP$" or str(
+                token.pos_) == "PRON") and token.nbor().text == "(":  # se la parola e' un pronome personale, possessivo ed e' seguito da una parentesi
+            part_sent = str(sent_core[i][token.i:])  # prendo tutta la frase a partire dal pronome corrente e la salvo
+            parola = part_sent[part_sent.index("(") + 1: part_sent.index(
+                ")")]  # prendo la parola tra parentesi alla destra del pronome e la salvo
+            if parola in chain(*names):  # se la parola e' un nome proprio e quindi molto probabilmente non varia dall'inglese al tedesco
+                pro_en.append((token.text, token.i,
+                               "(" + parola + ")"))  # aggiungo alla lista la tripla di pronome indice e parola
+            else:  # se invece e' un nome comune
+                translator = Translator(from_lang='en', to_lang='de')  # uso la libreria per ricavarmi la traduzione
+                translation = translator.translate(parola)  # da inglese a tedesco
+                pro_en.append((token.text, token.i, "(" + translation + ")"))  # aggiungo alla lista la tripla di pronome indice e parola
+
+    y = 0  # un contatore che serve per posizione in modo corretto le parole vicino ai pronomi
+    c = 0  # contatore per prendere il pronome giusto dalla lista
+    for j in range(max(len(pro_en), len(pro_de))):
+        if len(pro_en) == len(pro_de):  # se i pronomi sono di quantita' uguale
+            if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:  # controllo se il pronome tedesco e' la traduzione inglese
+                s_de.insert(pro_de[c][1] + y + 1,
+                            pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
+                y += 1  # aumento il contatore
+                c += 1  # aumento il contatore
+            else:  # se non sono una la traduzione dell'altro
+                c += 1  # aumento il contatore, quindi vado avanti nella lista
+        elif len(pro_en) > len(pro_de) != 0 and len(pro_en) != 0 and len(
+                pro_de) > c:  # se ci sono piu' pronomi inglesi di quelli tedeschi
+            if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:  # controllo se il pronome tedesco e' la traduzione inglese
+                s_de.insert(pro_de[c][1] + y + 1,
+                            pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
+                y += 1  # aumento il contatore
+                c += 1  # aumento il contatore
+            else:  # se non sono una la traduzione dell'altro
+                pro_en.remove(pro_en[c])  # elimino il pronome che non ha la traduzione
+        elif 0 != len(pro_de) > len(pro_en) > c and len(
+                pro_en) != 0:  # se ci sono meno pronomi inglesi di quelli tedeschi
+            if pro_de[c][0].lower() in pron[pro_en[c][0].lower()]:  # controllo se il pronome tedesco e' la traduzione inglese
+                s_de.insert(pro_de[c][1] + y + 1,
+                            pro_en[c][2])  # inserisco la parola tra parentesi dopo il pronome tedesco
+                y += 1  # aumento il contatore
+                c += 1  # aumento il contatore
+            else:  # se non sono una la traduzione dell'altro
+                pro_de.remove(pro_de[c])  # elimino il pronome che non ha la traduzione
+
+    sent_core_de.append(" ".join(s_de).replace(" ,", ",").replace(" .", "."))
+
+    defile_name = defile.name
+    f = open(defile_name[:len(defile_name) - 4] + ".pcr.txt", "w")
+    for riga in sent_core_de:
+        if sent_core_de.index(riga) == 0:
+            f.write("[")
+            f.write(str([riga]) + ", ")
+        if sent_core_de.index(riga) == len(sent_core_de) - 1:
+            f.write(str([riga]))
+            f.write("]")
+        else:
+            f.write(str([riga]) + ", ")
+
     return 1
 
 
@@ -224,7 +336,7 @@ def get_coreference(name_enfile):
             names[i] = [names[i]]  # creo una lista con il nome
         else:  # se ci sono gli alias
             names[i] = names[i].split(" _ ")  # separiamoli
-    lines[0] = lines[0][lines[0].index("Text") + 4:]  # elimino la prima riga tranne la parte dopo "Text" (è stata creata dopo e non fa parte del testo iniziale)
+    lines[0] = lines[0][lines[0].index("Text") + 4:]  # elimino la prima riga tranne la parte dopo "Text" (e' stata creata dopo e non fa parte del testo iniziale)
     f1 = open(file_pcr, "w")  # apro lo stesso file in scrittura
     f1.write("".join(lines))  # risalvo il contenuto meno la prima riga nel file che contiene la coreference
     return names  # ritorno la lista dei nomi individuati con la coreference
@@ -250,27 +362,27 @@ def sentence_splitter(sent):
     for sentence, i in zip(sent, range(len(sent))):  # per ogni frase in sent e per ogni indice
         sentence = str(sentence).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
         if re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]*[A-Za-z0-9,:;\]\)\}\-_\"\'\`\« ]$", str(sentence)):  # se la frase inizia con la maiuscola non finisce con ".", "?", "!" o "…" - caso 1
-            if len(sent_2) != 0:  # se la lista non è vuota
+            if len(sent_2) != 0:  # se la lista non e' vuota
                 if re.match("^(\s|\`|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", sent_2[len(sent_2) - 1]) \
                         or re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", sent_2[len(sent_2) - 1]):  # se quella prima finisce con ., ?, ! etc.
                     sent_2.append(str(sentence))  # aggiungo solo la frase attuale
                 else:  # se la frase prima non finisce con ., ?, ! etc.
-                    sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + str(sentence)  # aggiungo la frase attuale a quella precedente
-            else:  # se la lista è vuota
+                    sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # aggiungo la frase attuale a quella precedente
+            else:  # se la lista e' vuota
                 sent_2.append(str(sentence))  # aggiungo direttamente la frase
 
         elif re.match("^(\s|\`|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # caso 3 -> frase completa
             sent_2.append(str(sentence))  # aggiungo direttamente la frase
 
         elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*[A-Za-z0-9,:;\]\)\}\-_\"\'\`\« ]$", str(sentence)) \
-                or re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # se è in mezzo o la fine di una frase - caso 2 e 3
+                or re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # se e' in mezzo o la fine di una frase - caso 2 e 3
             if len(sent_2) != 0:  # se la lista non e' vuota
                 if str(sentence) not in str(sent_2[len(sent_2) - 1]):  # e la frase non e' stata ancora aggiunta
                     # if re.match("^(\s|\`|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", sent_2[len(sent_2) - 1]) \
                     #         or re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", sent_2[len(sent_2) - 1]):  # se quella prima finisce con il punto
                     #     sent_2.append(str(sentence))  # aggiungi la frase attuale alla lista
                     # else:
-                    sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + str(sentence)  # aggiungo la frase attuale a quella precedente
+                    sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # aggiungo la frase attuale a quella precedente
 
             else:  # se la lista e' vuota
                 sent_2.append(str(sentence))  # aggiungi la frase alla lista
@@ -278,7 +390,7 @@ def sentence_splitter(sent):
     return sent_2  # restituisco la lista delle frasi
 
 
-# Il metodo sentence_splitter_coref è uguale al metodo sentence_splitter tranne che viene applicato al file che contiene le coreference
+# Il metodo sentence_splitter_coref e' uguale al metodo sentence_splitter tranne che viene applicato al file che contiene le coreference
 # che ha parole tra parentesi nel testo, quindi viene trattato in modo differente, per spezzare allo stesso modo di sentence_splitter e fare in modo
 # che le due liste siano divise allo stesso modo (lista delle frasi inglesi e lista delle frasi inglesi con coreference)
 def sentence_splitter_coref(sent):
@@ -286,27 +398,27 @@ def sentence_splitter_coref(sent):
     for sentence, i in zip(sent, range(len(sent))):  # per ogni frase in sent e per ogni indice
         sentence = str(sentence).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
         if re.match("^(\s|\;|\((.*?)\)|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]*[A-Za-z0-9,:;\]\)\}\-_\"\'\`\« ]$", str(sentence)):  # se la frase inizia con la maiuscola non finisce con ".", "?", "!" o "…" - caso 1
-            if len(sent_2) != 0:  # se la lista non è vuota
+            if len(sent_2) != 0:  # se la lista non e' vuota
                 if re.match("^(\s|\`|\((.*?)\)|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", sent_2[len(sent_2) - 1]) \
                         or re.match("^(\s|\;|\:|\((.*?)\)|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", sent_2[len(sent_2) - 1]):  # se quella prima finisce con ., ?, ! etc.
                     sent_2.append(str(sentence))  # aggiungo solo la frase attuale
                 else:  # se la frase prima non finisce con ., ?, ! etc.
-                    sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + str(sentence)  # aggiungo la frase attuale a quella precedente
-            else:  # se la lista è vuota
+                    sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # aggiungo la frase attuale a quella precedente
+            else:  # se la lista e' vuota
                 sent_2.append(str(sentence))  # aggiungo direttamente la frase
 
         elif re.match("^(\s|\`|\((.*?)\)|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # caso 3 -> frase completa
             sent_2.append(str(sentence))  #  aggiungo direttamente la frase
 
         elif re.match("^(\s|\;|\:|\((.*?)\)|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*[A-Za-z0-9,:;\]\)\}\-_\`\«\"\' ]$", str(sentence)) \
-                or re.match("^(\s|\;|\((.*?)\)|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # se è in mezzo o la fine di una frase - caso 2 e 3
+                or re.match("^(\s|\;|\((.*?)\)|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # se e' in mezzo o la fine di una frase - caso 2 e 3
             if len(sent_2) != 0:  # se la lista non e' vuota
                 if str(sentence) not in str(sent_2[len(sent_2) - 1]):  # e la frase non e' stata ancora aggiunta
                     # if re.match("^(\s|\`|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", sent_2[len(sent_2) - 1]) \
                     #         or re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", sent_2[len(sent_2) - 1]):  # se quella prima finisce con il punto
                     #     sent_2.append(str(sentence))  # aggiungi la frase attuale alla lista
                     # else:
-                    sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + str(sentence)  # aggiungo la frase attuale a quella precedente
+                    sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # aggiungo la frase attuale a quella precedente
             else:  # se la lista e' vuota
                 sent_2.append(str(sentence))  # aggiungi la frase alla lista
 
@@ -318,3 +430,4 @@ def sentence_splitter_coref(sent):
 #     sentences.append(len(common) / minimo)  # aggiungo la percentuale di somiglianza tra le frasi
 # else:  # se il denominatore e' 0
 #     sentences.append(0.0)  # allora la percentuale e' 0
+#percentuale = 0.21445344259078236  # la percentuale di riferimento calcolata precedentemente
