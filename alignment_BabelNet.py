@@ -15,10 +15,6 @@ nlp = spacy.load("en_core_web_lg")
 nlp.add_pipe(BabelnetAnnotator("en"))
 nlp2 = spacy.load("de_core_news_lg")
 nlp2.add_pipe(BabelnetAnnotator("de"))
-sentencizer = nlp.create_pipe("sentencizer")
-nlp.add_pipe(sentencizer)
-sentencizer = nlp2.create_pipe("sentencizer")
-nlp2.add_pipe(sentencizer)
 
 
 # Il metodo create_set_en crea una lista di insiemi che contengono i synset di ciascuna frase del testo inglese
@@ -31,16 +27,16 @@ def create_set_en(enfile):
     count_words = []  # lista di conteggio delle parola con synset per ciascuna frase
     doc = nlp(enfile.read())
     for s in doc.sents:  # Mi salvo ogni frase separatamente all'intero di una lista
-        print(s)
         sent_en.append(s)
 
     sent_en_2 = sentence_splitter(sent_en)  # richiamo il metodo che prende la lista delle frasi e ne restituisce un'altra spezzata correttamente
 
     for frase in sent_en_2:  # per ogni frase nella nuova lista
-        print(frase)
         sent_en_3.append(nlp(frase))  # la faccio diventare span
 
     for sent in sent_en_3:  # per ogni frase nel testo inglese
+        print("FRASE SOTTO")
+        print(sent)
         words = 0
         d = {}  # inizializzo il dizionario che avra' come chiave un sostantivo e come valore la lista dei suoi synset
         set_en = set()  # creo un'insieme in cui si troveranno i synset
@@ -382,23 +378,21 @@ def sentence_splitter(sent):
                 if str(sentence) in str(sent_2[len(sent_2) - 1]):  # se sta nella frase prima
                     # aggiungi il controllo per tutti i casi di discorso diretto
                     if str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
-                        if i < len(sent):  # controllo per non avere errore
-                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sent[i + 1])  # aggiungo alla frase la frase dopo
-                    else:
-                        continue
+                        if i + 1 < len(sent):  # controllo per non avere errore
+                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(s)  # aggiungo alla frase la frase dopo
                 else:  # se non sta nella frase prima
                     if str(sentence).count("\"") % 2 == 0:  # se la punteggiatura e' giusta
                         sent_2.append(str(sentence))  # aggiungi la frase
                     else:  # se non e' giusta
-                        if i < len(sent):  # controllo per non avere errore
-                            sent_2.append(str(sentence) + " "+ str(sent[i + 1]))  # aggiungo alla frase la frase dopo
+                        if i + 1 < len(sent):  # controllo per non avere errore
+                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                            sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
             else:  # se la lista e' vuota
-                print("QUANTI SONOO")
-                print(str(sentence).count("\"") % 2 == 1)
                 if str(sentence).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
-                    ("SBAGLIATO")
-                    if i < len(sent):  # controllo per non avere errore
-                        sent_2.append(str(sentence) + " " + str(sent[i + 1]))  # aggiungo alla frase attuale la frase dopo
+                    if i + 1 < len(sent):  # controllo per non avere errore
+                        s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                        sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase attuale la frase dopo
                 else:  # se e' giusto
                     sent_2.append(str(sentence))  # aggiungo solo la frase
 
@@ -407,15 +401,18 @@ def sentence_splitter(sent):
             # Caso 1 -- Inizio frase (inizia con maiuscola ma non finisce col punto)
             if len(sent_2) != 0:  # se la lista delle frasi non e' vuota
                 if str(sentence) not in str(sent_2[len(sent_2) - 1]):  # non sta nella frase prima
-                    if i < len(sent):  # controllo per non avere errore
-                        sent_2.append(str(sentence) + " " + str(sent[i + 1]))  # aggiungo alla frase la frase dopo
+                    if i + 1 < len(sent):  # controllo per non avere errore
+                        s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v"," ").replace("\f", " ")  # elimino i caratteri di escape
+                        sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
 
                 else:  # sta nella frase prima
-                    if i < len(sent):  # controllo per non avere errore
-                        sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sent[i + 1])  # aggiungo alla frase prima la frase dopo
+                    if i + 1 < len(sent):  # controllo per non avere errore
+                        s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                        sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(s)  # aggiungo alla frase prima la frase dopo
             else:  # se e' vuota
-                if i < len(sent):  # controllo per non avere errore
-                    sent_2.append(str(sentence) + " " + str(sent[i + 1]))  # aggiungo alla frase la frase dopo
+                if i + 1 < len(sent):  # controllo per non avere errore
+                    s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                    sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
 
         elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\“|\`|\‚|\‘|\„|\"|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*[A-Za-z0-9,:;\]\)\}\-_\"\'\`\« ]$", str(sentence)):  # se e' in mezzo  - caso 2
             print("caso 2")
@@ -427,27 +424,30 @@ def sentence_splitter(sent):
             else:  # se la lista e' vuota
                 sent_2.append(str(sentence))  # aggiungi la frase alla lista
 
-        elif re.match("^(\s|\`|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # frase completa - caso 3
-            print("caso 3")
-            # Caso 3 -- Frase completa (inizia con maiuscola e termina col punto)
-            if len(sent_2) != 0:  # se la lista non e' vuota
-                if str(sentence) in str(sent_2[len(sent_2) - 1]):  # se sta nella frase prima
-                    # aggiungi il controllo per tutti i casi di discorso diretto
-                    if str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
-                        if i < len(sent):  # controllo per non avere errore
-                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sent[i + 1])  # aggiungo alla frase la frase dopo
-                else:  # se non sta nella frase prima
-                    if str(sentence).count("\"") % 2 == 0:  # se la punteggiatura e' giusta
-                        sent_2.append(str(sentence))  # aggiungi la frase
-                    else:  # se non e' giusta
-                        if i < len(sent):  # controllo per non avere errore
-                            sent_2.append(str(sentence) + " " + str(sent[i + 1]))  # aggiungo alla frase la frase dopo
-            else:  # se la lista e' vuota
-                if str(sentence).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
-                    if i < len(sent):  # controllo per non avere errore
-                        sent_2.append(str(sentence) + " " + str(sent[i + 1]))  # aggiungo alla frase attuale la frase dopo
-                else:  # se e' giusto
-                    sent_2.append(str(sentence))  # aggiungo solo la frase
+        # elif re.match("^(\s|\`|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # frase completa - caso 3
+        #     print("caso 3")
+        #     # Caso 3 -- Frase completa (inizia con maiuscola e termina col punto)
+        #     if len(sent_2) != 0:  # se la lista non e' vuota
+        #         if str(sentence) in str(sent_2[len(sent_2) - 1]):  # se sta nella frase prima
+        #             # aggiungi il controllo per tutti i casi di discorso diretto
+        #             if str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
+        #                 if i + 1 < len(sent):  # controllo per non avere errore
+        #                     s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+        #                     sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(s)  # aggiungo alla frase la frase dopo
+        #         else:  # se non sta nella frase prima
+        #             if str(sentence).count("\"") % 2 == 0:  # se la punteggiatura e' giusta
+        #                 sent_2.append(str(sentence))  # aggiungi la frase
+        #             else:  # se non e' giusta
+        #                 if i + 1 < len(sent):  # controllo per non avere errore
+        #                     s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+        #                     sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
+        #     else:  # se la lista e' vuota
+        #         if str(sentence).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
+        #             if i + 1 < len(sent):  # controllo per non avere errore
+        #                 s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+        #                 sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase attuale la frase dopo
+        #         else:  # se e' giusto
+        #             sent_2.append(str(sentence))  # aggiungo solo la frase
 
         elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # la fine di una frase - caso 4
             print("caso 4")
@@ -456,22 +456,27 @@ def sentence_splitter(sent):
                 if str(sentence) in str(sent_2[len(sent_2) - 1]):  # se sta nella frase prima
                     # aggiungi il controllo per tutti i casi di discorso diretto
                     if str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
-                        if i < len(sent):  # controllo per non avere errore
-                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sent[i + 1])  # aggiungo alla frase la frase dopo
+                        if i + 1 < len(sent):  # controllo per non avere errore
+                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(s)  # aggiungo alla frase la frase dopo
                 else:  # se non sta nella frase prima
                     if (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("\"") % 2 == 0:  # se e' punteggiato bene
                         sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # aggiungo alla frase prima la frase nuova
                     else:  # senno'
-                        if i < len(sent):  # controllo per non avere errore
-                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence) + " " + str(sent[i + 1])  # aggiungo alla frase prima la frase attuale e la frase dopo
+                        if i + 1 < len(sent):  # controllo per non avere errore
+                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence) + " " + str(s)  # aggiungo alla frase prima la frase attuale e la frase dopo
             else:  # se e' vuota
                 if str(sentence).count("\"") % 2 == 0:  # se e' punteggiato bene
                     sent_2.append(str(sentence))  # aggiungo alla frase prima la frase nuova
                 else:  # senno'
-                    if i < len(sent):  # controllo per non avere errore
-                        sent_2.append(str(sentence) + " " + str(sent[i + 1]))  # aggiungo alla frase attuale la frase dopo
+                    if i + 1 < len(sent):  # controllo per non avere errore
+                        s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                        sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase attuale la frase dopo
 
     return sent_2  # restituisco la lista delle frasi
+
+
 '''
 # Caso 1 -- Inizio frase (inizia con maiuscola ma non finisce col punto)
 if len(sen_2) != 0:  # se la lista delle frasi non e' vuota
