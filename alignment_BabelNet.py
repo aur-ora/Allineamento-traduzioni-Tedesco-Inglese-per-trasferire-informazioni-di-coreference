@@ -371,32 +371,72 @@ def sentence_splitter(sent):
         print("eccolo")
         print(sentence)
 
-        if re.match("^(\s|\`|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # frase completa - caso 3
+        if re.match("^(\s|\`|\"|\'|\»|\«|\-|\_|\–|\‘|\“|\„|\‚)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\»|\”|\’|\’’|\'*)?\s*$)", str(sentence)):  # frase completa - caso 3
             print("caso 3")
             # Caso 3 -- Frase completa (inizia con maiuscola e termina col punto)
             if len(sent_2) != 0:  # se la lista non e' vuota
                 if str(sentence) in str(sent_2[len(sent_2) - 1]):  # se sta nella frase prima
                     # aggiungi il controllo per tutti i casi di discorso diretto
-                    if str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
+                    # if str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
+                    if str(sent_2[len(sent_2) - 1]).count("»") != str(sent_2[len(sent_2) - 1]).count("«") or str(sent_2[len(sent_2) - 1]).count("“") != str(sent_2[len(sent_2) - 1]).count("”") or\
+                            str(sent_2[len(sent_2) - 1]).count("„") != str(sent_2[len(sent_2) - 1]).count("”") or\
+                            str(sent_2[len(sent_2) - 1]).count("‘") != str(sent_2[len(sent_2) - 1]).count("’") or\
+                            str(sent_2[len(sent_2) - 1]).count("‚") != str(sent_2[len(sent_2) - 1]).count("’") or\
+                            str(sent_2[len(sent_2) - 1]).count("`") != str(sent_2[len(sent_2) - 1]).count("’") or\
+                            str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:
                         if i + 1 < len(sent):  # controllo per non avere errore
                             s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
                             sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(s)  # aggiungo alla frase la frase dopo
                 else:  # se non sta nella frase prima
-                    if str(sentence).count("\"") % 2 == 0:  # se la punteggiatura e' giusta
-                        sent_2.append(str(sentence))  # aggiungi la frase
+                    # if str(sentence).count("\"") % 2 == 0:  # se la punteggiatura e' giusta
+                    if str(sentence).count("»") == str(sentence).count("«") and str(sentence).count("“") == str(sentence).count("”") and\
+                            str(sentence).count("„") == str(sentence).count("”") and str(sentence).count("‘") == str(sentence).count("’") and\
+                            str(sentence).count("‚") == str(sentence).count("’") and str(sentence).count("`") == str(sentence).count("’") and\
+                            str(sentence).count("\"") % 2 == 0:
+                        if str(sentence).lower() != "mr." and str(sentence).lower() != "mrs." and str(sentence).lower() != "ms.":  # se non e' un onorifico
+                            sent_2.append(str(sentence))  # aggiungi la frase
+                        else:  # senno'
+                            if i + 1 < len(sent):  # controllo per non avere errore
+                                s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                                sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
+                            else:
+                                sent_2.append(str(sentence))  # aggiungo la frase
+
                     else:  # se non e' giusta
                         if i + 1 < len(sent):  # controllo per non avere errore
                             s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
                             sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
+                        else:
+                            sent_2.append(str(sentence))  # aggiungo la frase
             else:  # se la lista e' vuota
-                if str(sentence).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
+                # if str(sentence).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
+                if str(sentence).count("»") != str(sentence).count("«") or str(sentence).count("“") != str(sentence).count("”") or\
+                        str(sentence).count("„") != str(sentence).count("”") or str(sentence).count("‘") != str(sentence).count("’") or\
+                        str(sentence).count("‚") != str(sentence).count("’") or str(sentence).count("`") != str(sentence).count("’") or str(sentence).count("\"") % 2 == 1:
                     if i + 1 < len(sent):  # controllo per non avere errore
                         s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
                         sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase attuale la frase dopo
-                else:  # se e' giusto
-                    sent_2.append(str(sentence))  # aggiungo solo la frase
+                    else:
+                        if str(sentence).lower() != "mr." and str(sentence).lower() != "mrs." and str(sentence).lower() != "ms.":  # se non e' un onorifico
+                            sent_2.append(str(sentence))  # aggiungi la frase
+                        else:  # senno'
+                            if i + 1 < len(sent):  # controllo per non avere errore
+                                s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                                sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
+                            else:
+                                sent_2.append(str(sentence))  # aggiungo la frase
 
-        elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\“|\`|\‚|\‘|\„|\"|\»|\«)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]*[A-Za-z0-9,:;\]\)\}\-_\"\'\`\« ]$", str(sentence)):  # se la frase inizia con la maiuscola non finisce con ".", "?", "!" o "…" - caso 1
+                else:  # se e' giusto
+                    if str(sentence).lower() != "mr." and str(sentence).lower() != "mrs." and str(sentence).lower() != "ms.":  # se non e' un onorifico
+                        sent_2.append(str(sentence))  # aggiungi la frase
+                    else:  # senno'
+                        if i + 1 < len(sent):  # controllo per non avere errore
+                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                            sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
+                        else:
+                            sent_2.append(str(sentence))  # aggiungo la frase
+
+        elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\–|\“|\'|\`|\‚|\‘|\„|\"|\»|\«)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]*[A-Za-z0-9,:;\]\)\}\-_\"\'\`\«\»\”\’\’’ ]$", str(sentence)):  # se la frase inizia con la maiuscola non finisce con ".", "?", "!" o "…" - caso 1
             print("caso 1")
             # Caso 1 -- Inizio frase (inizia con maiuscola ma non finisce col punto)
             if len(sent_2) != 0:  # se la lista delle frasi non e' vuota
@@ -404,7 +444,8 @@ def sentence_splitter(sent):
                     if i + 1 < len(sent):  # controllo per non avere errore
                         s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v"," ").replace("\f", " ")  # elimino i caratteri di escape
                         sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
-
+                    else:
+                        sent_2.append(str(sentence))  # aggiungo la frase
                 else:  # sta nella frase prima
                     if i + 1 < len(sent):  # controllo per non avere errore
                         s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
@@ -413,8 +454,66 @@ def sentence_splitter(sent):
                 if i + 1 < len(sent):  # controllo per non avere errore
                     s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
                     sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
+                else:
+                    sent_2.append(str(sentence))  # aggiungo la frase
 
-        elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\“|\`|\‚|\‘|\„|\"|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*[A-Za-z0-9,:;\]\)\}\-_\"\'\`\« ]$", str(sentence)):  # se e' in mezzo  - caso 2
+        elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\–|\`|\"|\'|\'|\“|\‚|\‘|\„|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\»|\“|\”|\’’|\‚|\’|\‘|\„|\'*)?\s*$)", str(sentence)):  # la fine di una frase - caso 4
+            print("caso 4")
+            # Caso 4 -- Fine di una frase (inizia con minuscola e termina col punto)
+            if len(sent_2) != 0:  # se la lista non e' vuota
+                if str(sentence) in str(sent_2[len(sent_2) - 1]):  # se sta nella frase prima
+                    # aggiungi il controllo per tutti i casi di discorso diretto
+                    # if str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
+                    if str(sent_2[len(sent_2) - 1]).count("»") != str(sent_2[len(sent_2) - 1]).count("«") or str(sent_2[len(sent_2) - 1]).count("“") != str(sent_2[len(sent_2) - 1]).count("”") or\
+                        str(sent_2[len(sent_2) - 1]).count("„") != str(sent_2[len(sent_2) - 1]).count("”") or str(sent_2[len(sent_2) - 1]).count("‘") != str(sent_2[len(sent_2) - 1]).count("’") or\
+                        str(sent_2[len(sent_2) - 1]).count("‚") != str(sent_2[len(sent_2) - 1]).count("’") or str(sent_2[len(sent_2) - 1]).count("`") != str(sent_2[len(sent_2) - 1]).count("’") or\
+                            str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:
+                        if i + 1 < len(sent):  # controllo per non avere errore
+                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(s)  # aggiungo alla frase la frase dopo
+                else:  # se non sta nella frase prima
+                    # if (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("\"") % 2 == 0:  # se e' punteggiato bene
+                    if (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("»") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("«") and \
+                            (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("“") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("”") and \
+                            (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("„") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("”") and \
+                            (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("‘") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") and \
+                            (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("‚") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") and \
+                            (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("`") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") and\
+                            (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("\"") % 2 == 0:
+                        sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # aggiungo alla frase prima la frase nuova
+                    else:  # senno'
+                        if i + 1 < len(sent):  # controllo per non avere errore
+                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence) + " " + str(s)  # aggiungo alla frase prima la frase attuale e la frase dopo
+            else:  # se e' vuota
+                # if str(sentence).count("\"") % 2 == 0:  # se e' punteggiato bene
+                if str(sentence).count("»") == str(sentence).count("«") and str(sentence).count("“") == str(sentence).count("”") and\
+                        str(sentence).count("„") == str(sentence).count("”") and str(sentence).count("‘") == str(sentence).count("’") and\
+                        str(sentence).count("‚") == str(sentence).count("’") and str(sentence).count("`") == str(sentence).count("’") and\
+                        str(sentence).count("\"") % 2 == 0:
+                    if str(sentence).lower() != "mr." and str(sentence).lower() != "mrs." and str(sentence).lower() != "ms.":  # se non e' un onorifico
+                        sent_2.append(str(sentence))  # aggiungi la frase
+                    else:  # senno'
+                        if i + 1 < len(sent):  # controllo per non avere errore
+                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                            sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
+                        else:
+                            sent_2.append(str(sentence))  # aggiungo la frase
+                else:  # senno'
+                    if i + 1 < len(sent):  # controllo per non avere errore
+                        s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                        sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase attuale la frase dopo
+                    else:
+                        if str(sentence).lower() != "mr." and str(sentence).lower() != "mrs." and str(sentence).lower() != "ms.":  # se non e' un onorifico
+                            sent_2.append(str(sentence))  # aggiungi la frase
+                        else:  # senno'
+                            if i + 1 < len(sent):  # controllo per non avere errore
+                                s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                                sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
+                            else:
+                                sent_2.append(str(sentence))  # aggiungo la frase
+
+        elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\–|\`|\"|\'|\'|\“|\‚|\‘|\„|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*[A-Za-z0-9,:;\]\)\}\-_\"\'\`\«\»\“\”\’’\‚\’\‘\„ ]$", str(sentence)):  # se e' in mezzo  - caso 2
             print("caso 2")
             # Caso 2 -- Se e' una frase intermedia ( inizia con minuscola, non finisce col punto)
             if len(sent_2) != 0:  # se la lista non e' vuota
@@ -424,56 +523,50 @@ def sentence_splitter(sent):
             else:  # se la lista e' vuota
                 sent_2.append(str(sentence))  # aggiungi la frase alla lista
 
-        # elif re.match("^(\s|\`|\"|\'|\»)*[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\s\S\d ]+([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # frase completa - caso 3
-        #     print("caso 3")
-        #     # Caso 3 -- Frase completa (inizia con maiuscola e termina col punto)
-        #     if len(sent_2) != 0:  # se la lista non e' vuota
-        #         if str(sentence) in str(sent_2[len(sent_2) - 1]):  # se sta nella frase prima
-        #             # aggiungi il controllo per tutti i casi di discorso diretto
-        #             if str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
-        #                 if i + 1 < len(sent):  # controllo per non avere errore
-        #                     s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
-        #                     sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(s)  # aggiungo alla frase la frase dopo
-        #         else:  # se non sta nella frase prima
-        #             if str(sentence).count("\"") % 2 == 0:  # se la punteggiatura e' giusta
-        #                 sent_2.append(str(sentence))  # aggiungi la frase
-        #             else:  # se non e' giusta
-        #                 if i + 1 < len(sent):  # controllo per non avere errore
-        #                     s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
-        #                     sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase la frase dopo
-        #     else:  # se la lista e' vuota
-        #         if str(sentence).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
-        #             if i + 1 < len(sent):  # controllo per non avere errore
-        #                 s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
-        #                 sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase attuale la frase dopo
-        #         else:  # se e' giusto
-        #             sent_2.append(str(sentence))  # aggiungo solo la frase
-
-        elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\`|\"|\'|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\'*)?\s*$)", str(sentence)):  # la fine di una frase - caso 4
-            print("caso 4")
-            # Caso 4 -- Fine di una frase (inizia con minuscola e termina col punto)
-            if len(sent_2) != 0:  # se la lista non e' vuota
-                if str(sentence) in str(sent_2[len(sent_2) - 1]):  # se sta nella frase prima
-                    # aggiungi il controllo per tutti i casi di discorso diretto
-                    if str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  # se e' punteggiato sbagliato
-                        if i + 1 < len(sent):  # controllo per non avere errore
-                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
-                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(s)  # aggiungo alla frase la frase dopo
-                else:  # se non sta nella frase prima
-                    if (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("\"") % 2 == 0:  # se e' punteggiato bene
-                        sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # aggiungo alla frase prima la frase nuova
-                    else:  # senno'
-                        if i + 1 < len(sent):  # controllo per non avere errore
-                            s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
-                            sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence) + " " + str(s)  # aggiungo alla frase prima la frase attuale e la frase dopo
-            else:  # se e' vuota
-                if str(sentence).count("\"") % 2 == 0:  # se e' punteggiato bene
-                    sent_2.append(str(sentence))  # aggiungo alla frase prima la frase nuova
-                else:  # senno'
-                    if i + 1 < len(sent):  # controllo per non avere errore
-                        s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
-                        sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase attuale la frase dopo
-
+        # else:  # se non e' nessuno di questi casi - caso 5
+        #     print("caso 5")
+        #     if str(sentence).isalpha():  # se e' una lettera
+        #         if i + 1 < len(sent):  # controllo per non avere errore
+        #             s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+        #             sent_2.append(str(sentence) + " " + str(s))  # aggiungo la lettera alla frase dopo
+        #         if i >= len(sent) and len(sent_2) != 0:  # se non c'e' la frase dopo e c'e' la frase prima
+        #             sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # unisci alla frase prima
+        #         else:  # senno'
+        #             sent_2.append(str(sentence))  # aggiungo la frase
+            # else:  # se invece non e' una lettera
+            #     if len(sent_2) != 0:  # se la lista non e' vuota
+            #         print("sent_2")
+            #         print(str(sent_2[len(sent_2) - 1]).replace(" ", "")[-1] == str(sentence))
+            #         if (str(sent_2[len(sent_2) - 1]) + str(sentence)).count(str(sentence)) == 1:  # se aggiungendolo sono e' 1
+            #             if (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("»") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("«") and \
+            #                     (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("“") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("”") and \
+            #                     (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("„") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("”") and \
+            #                     (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("‘") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") and \
+            #                     (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("‚") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") and \
+            #                     (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("`") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") and\
+            #                     (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("\"") % 2 == 0:  # se il discorso diretto e' giusto
+            #                 sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # unisci alla frase prima
+            #             # else:  # se non e' giusto il discorso diretto
+            #             #     if i + 1 < len(sent):  # controllo per non avere errore
+            #             #         s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+            #             #         sent_2.append(str(sentence) + str(s))  # aggiungo alla frase la frase dopo
+            #             #     else:  # se non c'e'
+            #             #         sent_2.append(str(sentence))  # aggiungo la frase
+            #         if str(str(sent_2[len(sent_2) - 1]).replace(" ", "")[-1]) == str(sentence):  # se l'ultimo elemento e' l'elemento che sto considerando
+            #             print("HELLO")
+            #             continue
+            #         else:  # se non e' nessuno dei casi sopra
+            #             if i + 1 < len(sent):  # controllo per non avere errore
+            #                 s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+            #                 sent_2.append(str(sentence) + str(s))  # aggiungo alla frase la frase dopo
+            #             else:
+            #                 sent_2.append(str(sentence))  # aggiungo la frase
+            #     else:  # se e' vuota
+            #         if i + 1 < len(sent):  # controllo per non avere errore
+            #             s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+            #             sent_2.append(str(sentence) + str(s))  # aggiungo alla frase la frase dopo
+            #         else:
+            #             sent_2.append(str(sentence))  # aggiungo la frase
     return sent_2  # restituisco la lista delle frasi
 
 
@@ -536,6 +629,98 @@ else:  # se e' vuota
         if i < len(sent):  # controllo per non avere errore
             sent_2.append(str(sentence) + str(sent[i + 1])  # aggiungo alla frase prima la frase attuale e la frase dopo
     
+'''
+
+
+'''
+CONTROLLA TUTTI I CASI SOTTO
+
+GIUSTO
+sentence
+if str(sentence).count("»") == str(sentence).count("«") and str(sentence).count("“") == str(sentence).count("”") and str(sentence).count("„") == str(sentence).count("”")
+    and str(sentence).count("‘") == str(sentence).count("’") and str(sentence).count("‚") == str(sentence).count("’") and str(sentence).count("`") == str(sentence).count("’")
+    and str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 0:
+
+sent_2[len(sent_2) - 1] + sentence
+if (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("»") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("«") and\
+ (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("“") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("”") and\
+ (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("„") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("”") and\
+ (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("‘") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") and\ 
+    (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("‚") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") and\
+     (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("`") == (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’")
+    and (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("\"") % 2 == 0:
+
+sent_2[len(sent_2) - 1]
+if str(sent_2[len(sent_2) - 1]).count("»") == str(sent_2[len(sent_2) - 1]).count("«") and str(sent_2[len(sent_2) - 1]).count("“") == str(sent_2[len(sent_2) - 1]).count("”") and
+ str(sent_2[len(sent_2) - 1]).count("„") == str(sent_2[len(sent_2) - 1]).count("”")
+    and str(sent_2[len(sent_2) - 1]).count("‘") == str(sent_2[len(sent_2) - 1]).count("’") and 
+    str(sent_2[len(sent_2) - 1]).count("‚") == str(sent_2[len(sent_2) - 1]).count("’") and
+     str(sent_2[len(sent_2) - 1]).count("`") == str(sent_2[len(sent_2) - 1]).count("’")
+    and str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 0:
+  
+  
+    
+SBAGLIATO
+sentence   
+if str(sentence).count("»") != str(sentence).count("«") or str(sentence).count("“") != str(sentence).count("”") or str(sentence).count("„") != str(sentence).count("”")
+    or str(sentence).count("‘") != str(sentence).count("’") or str(sentence).count("‚") != str(sentence).count("’") or str(sentence).count("`") != str(sentence).count("’")
+    or str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:  
+
+sent_2[len(sent_2) - 1] + sentence
+if (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("»") != (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("«") or (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("“") != (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("”") or
+ (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("„") != (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("”")
+    or (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("‘") != (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") or 
+    (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("‚") != (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’") or
+     (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("`") != (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("’")
+    or (str(sent_2[len(sent_2) - 1]) + str(sentence)).count("\"") % 2 == 1:
+
+sent_2[len(sent_2) - 1]
+if str(sent_2[len(sent_2) - 1]).count("»") != str(sent_2[len(sent_2) - 1]).count("«") or str(sent_2[len(sent_2) - 1]).count("“") != str(sent_2[len(sent_2) - 1]).count("”") or
+ str(sent_2[len(sent_2) - 1]).count("„") != str(sent_2[len(sent_2) - 1]).count("”")
+    or str(sent_2[len(sent_2) - 1]).count("‘") != str(sent_2[len(sent_2) - 1]).count("’") or 
+    str(sent_2[len(sent_2) - 1]).count("‚") != str(sent_2[len(sent_2) - 1]).count("’") or
+     str(sent_2[len(sent_2) - 1]).count("`") != str(sent_2[len(sent_2) - 1]).count("’")
+    or str(sent_2[len(sent_2) - 1]).count("\"") % 2 == 1:
+
+    
+Faccio un controllo se sta nella frase prima di iniziare ogni caso
+if "«" in str(sentence) or "»" in str(sentence): 
+    # Caso « »
+    if str(sentence).count("»") == str(sentence).count("«"):
+        # faccio quello che devo fare se la punteggiatura e' giusta
+    else:
+        # faccio quello che devo fare se e' sbagliata
+        
+# Caso “ ” 
+if str(sentence).count("“") == str(sentence).count("”"):
+        # faccio quello che devo fare se la punteggiatura e' giusta
+    else:
+        # faccio quello che devo fare se e' sbagliata
+
+# Caso „ ” 
+if str(sentence).count("„") == str(sentence).count("”"):
+        # faccio quello che devo fare se la punteggiatura e' giusta
+    else:
+        # faccio quello che devo fare se e' sbagliata
+        
+# Caso ‘ ’ 
+if str(sentence).count("‘") == str(sentence).count("’"):
+        # faccio quello che devo fare se la punteggiatura e' giusta
+    else:
+        # faccio quello che devo fare se e' sbagliata
+
+# Caso ‚ ’ 
+if str(sentence).count("‚") == str(sentence).count("’"):
+        # faccio quello che devo fare se la punteggiatura e' giusta
+    else:
+        # faccio quello che devo fare se e' sbagliata
+
+#Caso ` ’ 
+if str(sentence).count("`") == str(sentence).count("’"):
+        # faccio quello che devo fare se la punteggiatura e' giusta
+    else:
+        # faccio quello che devo fare se e' sbagliata
+        
 '''
 
 
