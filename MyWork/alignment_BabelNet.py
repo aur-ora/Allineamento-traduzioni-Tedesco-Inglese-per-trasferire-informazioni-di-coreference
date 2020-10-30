@@ -210,10 +210,6 @@ def create_set_de_2(defile):
     return sent_de_3, synset_de, tok_syn_de, count_words
 
 
-
-
-
-
 # Il metodo same_sentence ricava la percentuale di similarita' tra la frase inglese e tedesca dei testi dati in input, e se la similarita' e' maggiore della percentuale
 # allora, se l'originale e' tedesco, ricaviamo le info sulla coreference dal testo tradotto in inglese e le trasferiamo al testo tedesco
 # se l'originale e' inglese, ricaviamo le info sul numero e genere delle parole tedesche,
@@ -505,7 +501,11 @@ def sentence_splitter(sent):
                     else:  # se non c'e' la successiva
                         sent_2.append(str(sentence))  # aggiungi alla lista
             else:  # se la lista e' vuota
-                sent_2.append(str(sentence))  # aggiungi alla lista
+                if i + 1 < len(sent):  # controllo per non avere errore
+                    s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                    sent_2.append(str(sentence) + " " + str(s))  # aggiungo alla frase prima la frase dopo
+                else:  # se non c'e' la successiva
+                    sent_2.append(str(sentence))  # aggiungi alla lista
 
         elif re.match("^(\s|\;|\:|\(|\,|\[|\{|\_|\-|\–|\`|\"|\'|\'|\“|\‚|\‘|\„|\»|\«)*[a-zäöü][a-zA-ZäöüÄÖÜß\s\S\d ]*([.?!…]\s*$|[.?!…](\"|\`|\«|\»|\“|\”|\’’|\‚|\’|\‘|\„|\“|\'*)?\s*$)", str(sentence)):  # la fine di una frase - caso 4
             # print("caso 4")
@@ -521,11 +521,27 @@ def sentence_splitter(sent):
             # Caso 2 -- Se e' una frase intermedia ( inizia con minuscola, non finisce col punto)
             if len(sent_2) != 0:  # se la lista non e' vuota
                 if str(sentence) not in str(sent_2[len(sent_2) - 1]):  # e la frase non e' stata ancora aggiunta
-                    sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)  # aggiungo la frase attuale a quella precedente
+                    if i + 1 < len(sent):
+                        s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                        sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence) + " " + str(s)  # aggiungo la frase attuale a quella precedente
+                    else:
+                        sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(sentence)
+                else:
+                    if i + 1 < len(sent):
+                        s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                        sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + " " + str(s)  # aggiungo la frase attuale a quella precedente
+            else:  # se la lista e' vuota
+                if i + 1 < len(sent):
+                    s = str(sent[i + 1]).replace("\n", " ").replace("\t", " ").replace("\r", " ").replace("\v", " ").replace("\f", " ")  # elimino i caratteri di escape
+                    sent_2.append(str(sentence) + " " + str(s))  # aggiungo la frase con la frase dopo
+                else:
+                    sent_2.append(str(sentence))  # aggiungi la frase alla lista
+        else:  # se non rientra in nessuno dei casi
+            # print("caso 5")
+            if len(sent_2) != 0:  # se la lista non e' vuota
+                sent_2[len(sent_2) - 1] = str(sent_2[len(sent_2) - 1]) + str(sentence)  # aggiungo la frase attuale a quella precedente
             else:  # se la lista e' vuota
                 sent_2.append(str(sentence))  # aggiungi la frase alla lista
-        else:  # se non rientra in nessuno dei casi
-            sent_2.append(str(sentence))
 
     # for i in range(len(sent_2)):
     #     print(str(i + 1) + " " + sent_2[i])
