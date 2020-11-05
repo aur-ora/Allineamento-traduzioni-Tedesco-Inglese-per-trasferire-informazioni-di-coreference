@@ -1,8 +1,9 @@
 from .alignment_BabelNet import create_set_en, create_set_de
 import json
+import copy
 
 
-# calcolare la similarita per calcolare la percentuali per i 6 casi definiti
+# calcolare la similarita' per calcolare la percentuali per i 6 casi definiti (lo uso per avere le percentuali di riferimento)
 def calculate_percentage(enfile, defile):
     sent_en, list_set_en, tok_en, words_en = create_set_en(enfile)  # prendo la lista di frasi e la lista degli insiemi dei synset di ciascuna frase inglese
     sent_de, list_set_de, tok_de, words_de = create_set_de(defile)  # prendo la lista di frasi e la lista degli insiemi dei synset di ciascuna frase tedesca
@@ -124,6 +125,19 @@ def calculate_percentage(enfile, defile):
     else:
         perc_case["sum_#_words"] = 0.0
 
+    print("min_length")
+    print(min_length)
+    print("max_length")
+    print(max_length)
+    print("union_set")
+    print(union_set)
+    print("min_w")
+    print(min_w)
+    print("max_w")
+    print(max_w)
+    print("sum_w")
+    print(sum_w)
+
     return perc_case
 
 
@@ -139,7 +153,7 @@ def media():
     mean = {}  # dizionario che contiene la media delle due medie (traduzione giusta e sbagliata) per ciascuno dei 6 casi
 
     for type_cal_perc in right_perc_case:
-        mean[type_cal_perc] = right_perc_case[type_cal_perc] * 0.7 + wrong_perc_case[type_cal_perc] * 0.3  # Media tra percentuali tra frasi con trad giusta e sbagliata
+        mean[type_cal_perc] = (right_perc_case[type_cal_perc] + wrong_perc_case[type_cal_perc]) / 2  # Media tra percentuali tra frasi con trad giusta e sbagliata
 
     with open('media_casi.json', 'w') as fp:
         json.dump(mean, fp)
@@ -147,12 +161,136 @@ def media():
     return 1
 
 
+# il metodo similarity_k_min_length calcola la similarita' tra le frasi inglesi e tedesche, in cui se e' un originale tedesco confronta una frase tedesca con k inglesi e prende quelle con percentuale maggiore
+# della percentuale di riferimento e tra questi prende il maggiore, stessa cosa se la percentuale e' minore, viceversa per gli originali inglesi, una frase inglese e k tedesche, pero' solo per il primo caso
+# in cui come denominatore prendo il minimo di lunghezza tra gli insiemi di synset
+def similarity_k_min_length(enfile, defile, k):
+    sent_en, list_set_en, tok_en, words_en = create_set_en(enfile)  # prendo la lista di frasi e la lista degli insiemi dei synset di ciascuna frase inglese
+    sent_de, list_set_de, tok_de, words_de = create_set_de(defile)  # prendo la lista di frasi e la lista degli insiemi dei synset di ciascuna frase tedesca)
+    with open("media_casi_arit.json", "r") as f:
+        mean = json.load(f)
+
+    d_1 = {"TRAD": {}, "NO_TRAD": {}}
+
+    # una_lista = []
+    #
+    # un_altra_lista = []
+
+    ind_sent = []
+
+    # if str(enfile.name).startswith("en"):  # se e' un originale tedesco
+    #     print("de")
+    #     list_one = list_set_de  # considero le frasi tedesche una ad uno
+    #     list_two = list_set_en  # considero le frasi inglesi k alla volta
+    # else:  # se e' un originale inglese
+    #     print("en")
+    #     list_one = list_set_en  # considero le frasi inglesi una ad uno
+    #     list_two = list_set_de  # considero le frasi tedesche k alla volta
+
+    indici = list(range(len(list_set_de)))  # ho la lista degli indici delle frasi della lista da cui prendiamo k frasi
+    print(indici)
+    for i in range(len(list_set_en)):  # per ogni frase nella lista da cui prendiamo solo una frase
+        min_length = []  # lista di coppie (percentuale, indice frase)
+        print("i -- " + str(i))
+        for j in range(k):  # per i k elementi
+            if j >= len(indici):
+                break
+            print("j -- " + str(j))
+            print("indici[j] -- " + str(indici[j]))
+            common = len(list_set_en[i].intersection(list_set_de[indici[j]]))  # numeratore = intersezione tra gli insiemi di synset della frase inglese e tedesca
+            minimum = min(len(list_set_en[i]), len(list_set_de[indici[j]]))  # denominatore = lunghezza minimo tra questi due insiemi
+
+            if minimum != 0:  # se il denominatore non e' uguale a 0 (evitare errore di divisione per zero)
+                div = common / minimum
+                if div >= mean["min_length"]:
+                    min_length.append((div, indici[j], True))
+                else:
+                    min_length.append((div, indici[j], False))  # mi salvo nella lista la coppia di divisione tra numeratore e denomintore (la percentuale) e l'indice di una delle k frasi
+
+            else:  # senno'
+                min_length.append((0.0, indici[j], False))  # mi salvo la coppia ma la divisione e' 0.0
+
+        print("min_length -- " + str(min_length))
+
+        s = max(min_length)
+
+        print("s prima -- " + str(s))
+
+        for t in range(k):
+            if s[1] not in ind_sent:
+                ind_sent.append(s[1])
+                break
+            else:
+                min_length.remove(s)
+                if len(min_length) != 0:
+                    s = max(min_length)
+        print("s dopo -- " + str(s))
+        indici.remove(s[1])
+
+    # for i in range(len(list_one)):  # per l'indice nella lista di frasi
+    #     min_length = []  # inizializzo la lista che conterra' la coppia di percentuale e indice per ciascuna delle k frasi
+    #     if i < len(list_two) - 2:  # se non sto alle ultime due frasi
+    #         print("MINORE")
+    #         if i + k > len(list_two):  # se indice + k (numero di frasi da considerare) e' maggiore della lunghezza della lista da cui prendo le k frasi
+    #             till = len(list_two)  # allora il limite del range e' la lunghezza della lista
+    #         else:  # se indice + k e' minore della lunghezza della lista
+    #             till = i + k  # allora considera i + k
+    #     else:  # se invece sto alle ultime due frasi
+    #         print("MAGGIORE")
+    #         till = len(list_two)
+    #
+    #     print("i -- " + str(i))
+    #     for j in range(i, till):  # da i (indice della frase singola) a i + k oppure len(list_two)
+    #
+    #         print("j -- " + str(j))
+    #         common = len(list_set_en[i].intersection(list_set_de[j]))  # numeratore = intersezione tra gli insiemi di synset della frase inglese e tedesca
+    #         minimum = min(len(list_set_en[i]), len(list_set_de[j]))  # denominatore = lunghezza minimo tra questi due insiemi
+    #
+    #         if minimum != 0:  # se il denominatore non e' uguale a 0 (evitare errore di divisione per zero)
+    #             print("common/minimum")
+    #             print(common/minimum)
+    #             min_length.append((common / minimum, j))  # mi salvo nella lista la coppia di divisione tra numeratore e denomintore (la percentuale) e l'indice di una delle k frasi
+    #         else:  # senno'
+    #             min_length.append((0.0, j))  # mi salvo la coppia ma la divisione e' 0.0
+    #
+    #     un_altra_lista.append(min_length)  # aggiungo la coppia in una lista che usero' per ricavarmi le frasi non considerate
+    #
+    #     print("min_length prima set -- " + str(min_length))
+    #     print("un_altra_lista")
+    #     print(un_altra_lista)
+    #
+    #     if i != 0:  # se non e' la prima frase
+    #         min_length = list(set(un_altra_lista[i]) - set(un_altra_lista[i - 1]) | set(una_lista[i - 1]))  # considero la
+    #     s = max(min_length)
+    #     print("min_length dopo set -- " + str(min_length))
+    #     minn = copy.deepcopy(min_length)
+    #
+    #     for t in range(k):
+    #         if s[1] not in ind_sent:
+    #             ind_sent.append(s[1])
+    #             break
+    #         else:
+    #             min_length.remove(s)
+    #             if len(min_length) != 0:
+    #                 s = max(min_length)
+    #
+    #     if len(minn) != 0:
+    #         minn.remove(s)
+    #     una_lista.append(minn)
+    #     print("minn")
+    #     print(minn)
+    #     print("una_lista")
+    #     print(una_lista)
+
+    return ind_sent
+
+
 #  mi salvo in un dizionario le info sulle traduzioni, quali indici (frasi) lo sono e quali non, per tutti e sei i casi
 def similarity(enfile, defile):
     sent_en, list_set_en, tok_en, words_en = create_set_en(enfile)  # prendo la lista di frasi e la lista degli insiemi dei synset di ciascuna frase inglese
     sent_de, list_set_de, tok_de, words_de = create_set_de(defile)  # prendo la lista di frasi e la lista degli insiemi dei synset di ciascuna frase tedesca)
     enfile_name = enfile.name
-    with open("media_casi.json", "r") as f:
+    with open("media_casi_arit.json", "r") as f:
         mean = json.load(f)
     file = open("casi_perc_" + enfile_name[3:len(enfile_name) - 7] + ".txt", "w")  # file che conterra' i 6 dizionari con le info sulle traduzioni di un solo testo
 
@@ -243,6 +381,7 @@ def similarity(enfile, defile):
         else:
             d_6["NO_TRAD"][i] = [sent_en[i], sent_de[i]]
 
+    # Per salvare le info in un file
     file.write(str(len(sent_en)) + " FRASI INGLESI E " + str(len(sent_de)) + " FRASI TEDESCHE" + "\n")
     file.write("\n")
     file.write("CASO 1 --> " + "# FRASI CHE SONO TRADUZIONE = " + str(len(d_1["TRAD"].values())) + " # FRASI CHE NON SONO TRADUZIONE = " + str(len(d_1["NO_TRAD"].values())) + "\n")
