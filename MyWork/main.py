@@ -61,16 +61,16 @@ def main():
     Devo runnare similarity_k_caso per tutti i casi, per tutti i testi, e k = 1, 3, 5
     Poi, devo runnare auto_analysis per le stesse volte
     '''
-    # K = 1, 3, 5 e CASO = min_length
-    for k in [1, 3, 5]:
-        for lingua in ["ted", "ing"]:
-            print(MyWork.similarity_k_min_length(conrad_en, conrad_de, k, lingua))
-            print(MyWork.similarity_k_min_length(poe_en, poe_de, k, lingua))
-            print(MyWork.similarity_k_min_length(stevenson_en, stevenson_de, k, lingua))
-            print(MyWork.similarity_k_min_length(hesse_en, hesse_de, k, lingua))
-            print(MyWork.similarity_k_min_length(juenger_en, juenger_de, k, lingua))
-            print(MyWork.similarity_k_min_length(zweig_en, zweig_de, k, lingua))
-    print("DONE min_length")
+    # # K = 1, 3, 5 e CASO = min_length
+    # for k in [1, 3, 5]:
+    #     for lingua in ["ted", "ing"]:
+    #         print(MyWork.similarity_k_min_length(conrad_en, conrad_de, k, lingua))
+    #         print(MyWork.similarity_k_min_length(poe_en, poe_de, k, lingua))
+    #         print(MyWork.similarity_k_min_length(stevenson_en, stevenson_de, k, lingua))
+    #         print(MyWork.similarity_k_min_length(hesse_en, hesse_de, k, lingua))
+    #         print(MyWork.similarity_k_min_length(juenger_en, juenger_de, k, lingua))
+    #         print(MyWork.similarity_k_min_length(zweig_en, zweig_de, k, lingua))
+    # print("DONE min_length")
     ###############################################################################
 
     # # K = 1, 3, 5  e CASO = max_length
@@ -147,11 +147,11 @@ def main():
     # for k in [1, 3, 5]:
     #     for caso in ["min_length", "max_length", "union", "max_w", "min_w", "sum_w"]:
     #         print(MyWork.precision_recall_f1(conrad_en, caso, k, open("analysis_ing.en.conrad.darkness.2.txt", "r"), open("analysis_ted.en.conrad.darkness.2.txt", "r")))
-    #         print(MyWork.precision_recall_f1(conrad_en, caso, k, open("analysis_ing.en.poe.masque.2.txt", "r"), open("analysis_ted.en.poe.masque.2.txt", "r")))
-    #         print(MyWork.precision_recall_f1(conrad_en, caso, k, open("analysis_ing.en.stevenson.treasure.2.txt", "r"), open("analysis_ted.en.stevenson.treasure.2.txt", "r")))
-    #         print(MyWork.precision_recall_f1(conrad_en, caso, k, open("analysis_ing.de.hesse.siddhartha.2.txt", "r"), open("analysis_ted.de.hesse.siddhartha.2.txt", "r")))
-    #         print(MyWork.precision_recall_f1(conrad_en, caso, k, open("analysis_ing.de.juenger.marmor.2.txt", "r"), open("analysis_ted.de.juenger.marmor.2.txt", "r")))
-    #         print(MyWork.precision_recall_f1(conrad_en, caso, k, open("analysis_ing.de.zweig.herzens.2.txt", "r"), open("analysis_ted.de.zweig.herzens.2.txt", "r")))
+    #         print(MyWork.precision_recall_f1(poe_en, caso, k, open("analysis_ing.en.poe.masque.2.txt", "r"), open("analysis_ted.en.poe.masque.2.txt", "r")))
+    #         print(MyWork.precision_recall_f1(stevenson_en, caso, k, open("analysis_ing.en.stevenson.treasure.2.txt", "r"), open("analysis_ted.en.stevenson.treasure.2.txt", "r")))
+    #         print(MyWork.precision_recall_f1(hesse_en, caso, k, open("analysis_ing.de.hesse.siddhartha.2.txt", "r"), open("analysis_ted.de.hesse.siddhartha.2.txt", "r")))
+    #         print(MyWork.precision_recall_f1(juenger_en, caso, k, open("analysis_ing.de.juenger.marmor.2.txt", "r"), open("analysis_ted.de.juenger.marmor.2.txt", "r")))
+    #         print(MyWork.precision_recall_f1(zweig_en, caso, k, open("analysis_ing.de.zweig.herzens.2.txt", "r"), open("analysis_ted.de.zweig.herzens.2.txt", "r")))
 
     # print("DONE EVERYTHING")
 
