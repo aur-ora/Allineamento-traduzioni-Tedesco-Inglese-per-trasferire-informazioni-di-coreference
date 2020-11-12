@@ -204,40 +204,48 @@ def media_arit():
     return 1
 
 
-# calcolo la media ponderata (0.7, 0.3) sia per il caso in cui le frasi sono traduzioni e il caso in cui non lo sono per tutti e sei i casi e salvare le medie in un dizionario
-# def media_pond():
-#     right_en = open("sent_perc_en.txt", "r")  # file che contiene le frasi inglesi
-#     right_de = open("sent_perc_de.txt", "r")  # file che contiene le frasi tedesche con traduzione corrispondente
-#     wrong_en = open("wrong_sent_perc_en.txt", "r")  # file che contiene le frasi inglesi (in posizione diverse rispetto a right_en)
-#     wrong_de = open("wrong_sent_perc_de.txt", "r")  # file che cotiene le frasi tedesche senza traduzione corrispondente
-#     right_perc_case = calculate_percentage(right_en, right_de)
-#     wrong_perc_case = calculate_percentage(wrong_en, wrong_de)
-#
-#     mean = {}  # dizionario che contiene la media delle due medie (traduzione giusta e sbagliata) per ciascuno dei 6 casi
-#
-#     for type_cal_perc in right_perc_case:
-#         mean[type_cal_perc] = (right_perc_case[type_cal_perc] * 0.7 + wrong_perc_case[type_cal_perc] * 0.3)  # Media tra percentuali tra frasi con trad giusta e sbagliata
-#
-#     with open('media_casi_73.json', 'w') as fp:
-#         json.dump(mean, fp)
-#
-#     return 1
-
-
 # mi calcola la precision, la recall, l'f1 e tutto altro, considerando entrambi i versi e quindi fondendo i risultati
 def precision_recall_f1(enfile, caso, k,  file_ing, file_ted):
     enfile_name = enfile.name
-    frasi_ing = file_ing[0]
-    vp_ing = frasi_ing[1]
-    vn_ing = frasi_ing[2]
-    fp_ing = frasi_ing[3]
-    fn_ing = frasi_ing[4]
+    file_ing = file_ing.readlines()
+    file_ing = "".join(file_ing)
+    file_ing = file_ing.split("_______________________________________________________________________________________________________________________________________________\n")
+    ing = []
+    for el in file_ing:
+        if el.split("\n") != ['']:
+            ing.append(el.split("\n"))
 
-    frasi_ted = file_ted[0]
-    vp_ted = frasi_ted[1]
-    vn_ted = frasi_ted[2]
-    fp_ted = frasi_ted[3]
-    fn_ted = frasi_ted[4]
+    file_ted = file_ted.readlines()
+    file_ted = "".join(file_ted)
+    file_ted = file_ted.split("_______________________________________________________________________________________________________________________________________________\n")
+    ted = []
+    for el in file_ted:
+        if el.split("\n") != ['']:
+            ted.append(el.split("\n"))
+
+    for lista in ing:
+        for el in lista:
+            if el == "":
+                lista.remove(el)
+
+        if lista[0].split("-")[0] == caso and int(lista[0].split("-")[1]) == k:
+            frasi_ing = int(lista[1].split(" = ")[1])
+            vp_ing = int(lista[2].split(" = ")[1])
+            vn_ing = int(lista[3].split(" = ")[1])
+            fp_ing = int(lista[4].split(" = ")[1])
+            fn_ing = int(lista[5].split(" = ")[1])
+
+    for lista in ted:
+        for el in lista:
+            if el == "":
+                lista.remove(el)
+
+        if lista[0].split("-")[0] == caso and int(lista[0].split("-")[1]) == k:
+            frasi_ted = int(lista[1].split(" = ")[1])
+            vp_ted = int(lista[2].split(" = ")[1])
+            vn_ted = int(lista[3].split(" = ")[1])
+            fp_ted = int(lista[4].split(" = ")[1])
+            fn_ted = int(lista[5].split(" = ")[1])
 
     frasi_tot = (frasi_ing + frasi_ted)
     vp_tot = (vp_ted + vp_ing) / frasi_tot
@@ -257,6 +265,31 @@ def precision_recall_f1(enfile, caso, k,  file_ing, file_ted):
     file.write("_______________________________________________________________________________________________________________________________________________\n")
     file.write("\n")
     file.write("CASO - " + caso + " con k = " + str(k) + "\n")
+    file.write("\n")
+    file.write("ANALISI CONSIDERANDO UNA AD UNA LE FRASI INGLESI E K VOLTE QUELLE TEDESCHE \n")
+    file.write("\n")
+    file.write("# frasi ing->ted = " + str(frasi_ing) + "\n")
+    file.write("\n")
+    file.write("# VERI POSITIVI ing->ted = " + str(vp_ing) + "\n")
+    file.write("\n")
+    file.write("# VERI NEGATIVI ing->ted = " + str(vn_ing) + "\n")
+    file.write("\n")
+    file.write("# FALSI POSITIVI ing->ted = " + str(fp_ing) + "\n")
+    file.write("\n")
+    file.write("# FALSI NEGATIVI ing->ted = " + str(fn_ing) + "\n")
+    file.write("\n")
+    file.write("ANALISI CONSIDERANDO UNA AD UNA LE FRASI TEDESCHE E K VOLTE QUELLE INGLESE \n")
+    file.write("\n")
+    file.write("# frasi ted->ing = " + str(frasi_ted) + "\n")
+    file.write("\n")
+    file.write("# VERI POSITIVI ted->ing = " + str(vp_ted) + "\n")
+    file.write("\n")
+    file.write("# VERI NEGATIVI ted->ing = " + str(vn_ted) + "\n")
+    file.write("\n")
+    file.write("# FALSI POSITIVI ted->ing = " + str(fp_ted) + "\n")
+    file.write("\n")
+    file.write("# FALSI NEGATIVI ted->ing = " + str(fn_ted) + "\n")
+    file.write("\n")
     file.write("\n")
     file.write("# frasi totali = " + str(frasi_tot) + "\n")
     file.write("\n")
@@ -286,14 +319,16 @@ def precision_recall_f1(enfile, caso, k,  file_ing, file_ted):
     file.write("\n")
     file.write("_______________________________________________________________________________________________________________________________________________\n")
     file.write("_______________________________________________________________________________________________________________________________________________\n")
+    file.close()
+
+    return 1
 
 
 # il metodo auto_analysis dovrebbe analizzare i veri positivi, i falsi postivi, i veri negativi e i falsi negativi in modo autonomo, prende il input i due testi, il caso, una stringa, che specifica
 # quale dei 6 casi viene usato e il numero k (# di frasi che si considerano per l'analisi)
 def auto_analysis(enfile, caso, k, lingua):
     enfile_name = enfile.name
-    corr_found = open(enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_" + caso + ".corr.txt", "r").readlines()
-    first = corr_found[0]
+    corr_found = open(lingua + "." + enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_" + caso + ".corr.txt", "r").readlines()
     corr_right = open("str." + lingua + ".fu." + enfile_name[:len(enfile_name) - 7] + ".right.corr.txt", "r").readlines()
 
     corr_found.remove(corr_found[0])
@@ -319,76 +354,27 @@ def auto_analysis(enfile, caso, k, lingua):
             else:  # se non ha -1
                 analisi.append("FP")  # e' un falso positivo
 
-    print(corr_found)
-    print(corr_right)
-    print(analisi)
-
     frasi_tot = len(corr_right)
     vp_tot = analisi.count("VP")
     vn_tot = analisi.count("VN")
     fp_tot = analisi.count("FP")
     fn_tot = analisi.count("FN")
-    # print("# VERI POSITIVI = " + str(vp_tot) + "\n")
-    # print("\n")
-    # print("# VERI NEGATIVI = " + str(vn_tot) + "\n")
-    # print("\n")
-    # print("# FALSI POSITIVI = " + str(fp_tot) + "\n")
-    # print("\n")
-    # print("# FALSI NEGATIVI = " + str(fn_tot) + "\n")
-    perc_fp = (fp_tot/frasi_tot) * 100
-    perc_fn = (fn_tot/frasi_tot) * 100
-    # recall = vp_tot/(vp_tot + fn_tot)
-    # precision = vp_tot/(vp_tot + fp_tot)
-    # print(precision)
-    # print(recall)
-    # f1 = 2 / ((1/precision) + (1/recall))
 
-    file = open("analysis_" + first + "." + enfile_name[:len(enfile_name) - 7] + ".txt", "a")
-    file.write(str(frasi_tot) + "\n")
-    file.write(str(vp_tot) + "\n")
-    file.wrtie(str(vn_tot) + "\n")
-    file.write(str(fp_tot) + "\n")
-    file.write(str(fn_tot) + "\n")
-    # file.write("_______________________________________________________________________________________________________________________________________________\n")
-    # file.write("_______________________________________________________________________________________________________________________________________________\n")
-    # file.write(first)
-    # file.write("\n")
-    # file.write("CASO - " + caso + " con k = " + str(k) + "\n")
-    # file.write("\n")
-    # file.write("lista corrispondence corrette - " + str(corr_right) + "\n")
-    # file.write("\n")
-    # file.write("lista corrispondence trovate/allineate - " + str(corr_found) + "\n")
-    # file.write("\n")
-    # file.write("lista analisi frasi - " + str(analisi) + "\n")
-    # file.write("\n")
-    # file.write("# frasi totali = " + str(frasi_tot) + "\n")
-    # file.write("\n")
-    # file.write("# VERI POSITIVI = " + str(vp_tot) + "\n")
-    # file.write("\n")
-    # file.write("# VERI NEGATIVI = " + str(vn_tot) + "\n")
-    # file.write("\n")
-    # file.write("# FALSI POSITIVI = " + str(fp_tot) + "\n")
-    # file.write("\n")
-    # file.write("# FALSI NEGATIVI = " + str(fn_tot) + "\n")
-    # file.write("\n")
-    # file.write("PERCENTUALE DI FALSI POSITIVI = " + str(perc_fp) + " %" + "\n")
-    # file.write("\n")
-    # file.write("PERCENTUALE DI FALSI NEGATIVI = " + str(perc_fn) + " %" + "\n")
-    # file.write("\n")
-    # file.write("RECALL = " + str(recall) + "\n")
-    # file.write("\n")
-    # file.write("PRECISION = " + str(precision) + "\n")
-    # file.write("\n")
-    # file.write("% RECALL = " + str(recall * 100) + " %" + "\n")
-    # file.write("\n")
-    # file.write("% PRECISION = " + str(precision * 100) + " %" + "\n")
-    # file.write("\n")
-    # file.write("F1 = " + str(f1) + "\n")
-    # file.write("\n")
-    # file.write("% F1 = " + str(f1 * 100) + " %" + "\n")
-    # file.write("\n")
-    # file.write("_______________________________________________________________________________________________________________________________________________\n")
-    # file.write("_______________________________________________________________________________________________________________________________________________\n")
+    file = open("analysis_" + lingua + "." + enfile_name[:len(enfile_name) - 7] + ".txt", "a")
+    file.write(caso + "-" + str(k) + "\n")
+    file.write("\n")
+    file.write("frasi_tot = " + str(frasi_tot) + "\n")
+    file.write("\n")
+    file.write("vp_tot = " + str(vp_tot) + "\n")
+    file.write("\n")
+    file.write("vn_tot = " + str(vn_tot) + "\n")
+    file.write("\n")
+    file.write("fp_tot = " + str(fp_tot) + "\n")
+    file.write("\n")
+    file.write("fn_tot = " + str(fn_tot) + "\n")
+    file.write("_______________________________________________________________________________________________________________________________________________\n")
+    file.close()
+
     return 1
 
 
@@ -514,8 +500,8 @@ def similarity_k_min_length(enfile, defile, k, lingua):
         str_corr += "[" + str(corrispondenze.index(c)) + "]:" + str(c[0]) + ":[" + c[1] + "], "  # compongo la stringa
         corrispondenze[corrispondenze.index(c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
 
-    f = open(enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_min_length.corr.txt", "w")  # salvo la stringa in un file
-    f.write(first + "\n")
+    f = open(lingua + "." + enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_min_length.corr.txt", "w")  # salvo la stringa in un file
+    f.write(lingua + "\n")
     f.write(str_corr[:-2])
     f.close()
 
@@ -548,12 +534,12 @@ def similarity_k_max_length(enfile, defile, k, lingua):
     # if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "de"
+        first = "ted"
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "en"
+        first = "ing"
 
     index_one = 0  # indice che si spostera' di 1 ogni volta
     index_two = 0  # indice che si spostera' di 1 rispetto all'indice dell'ultimo match
@@ -574,7 +560,7 @@ def similarity_k_max_length(enfile, defile, k, lingua):
 
             if maximum != 0:  # per evitare errore di divisione per zero
                 if common / maximum >= mean["max_length"]:  # se il valore di similarita' e' maggiore o uguale a quello di riferimento
-                    corr.append((common / maximum), j)  # aggiungo alla lista la coppia (valore, indice)
+                    corr.append((common / maximum, j))  # aggiungo alla lista la coppia (valore, indice)
                 else:  # se non supera la soglia
                     no_corr.append((common / maximum, set(set_two[j]), j))  # mi salvo la perc, l'insieme di synset e l'indice
             else:  # se il denominatore e' 0
@@ -647,9 +633,9 @@ def similarity_k_max_length(enfile, defile, k, lingua):
         corrispondenze[corrispondenze.index(
             c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
 
-    f = open(enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_max_length.corr.txt",
+    f = open(lingua + "." + enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_max_length.corr.txt",
              "w")  # salvo la stringa in un file
-    f.write(first + "\n")
+    f.write(lingua + "\n")
     f.write(str_corr[:-2])
     f.close()
 
@@ -682,12 +668,12 @@ def similarity_k_union(enfile, defile, k, lingua):
     #if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "de"
+        first = "ted"
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "en"
+        first = "ing"
 
     index_one = 0  # indice che si spostera' di 1 ogni volta
     index_two = 0  # indice che si spostera' di 1 rispetto all'indice dell'ultimo match
@@ -779,8 +765,8 @@ def similarity_k_union(enfile, defile, k, lingua):
         corrispondenze[corrispondenze.index(
             c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
 
-    f = open(enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_union.corr.txt", "w")  # salvo la stringa in un file
-    f.write(first + "\n")
+    f = open(lingua + "." + enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_union.corr.txt", "w")  # salvo la stringa in un file
+    f.write(lingua + "\n")
     f.write(str_corr[:-2])
     f.close()
 
@@ -815,14 +801,14 @@ def similarity_k_max_words(enfile, defile, k, lingua):
     # if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "de"
+        first = "ted"
         words_one = words_de  # considero la lista delle parole tedesche come la principale
         words_two = words_en  # considero la lista delle parole inglesi come la secondaria
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "en"
+        first = "ing"
         words_one = words_en  # considero la lista delle parole inglesi come la principale
         words_two = words_de  # considero la lista delle parole tedesche come la secondaria
 
@@ -920,8 +906,8 @@ def similarity_k_max_words(enfile, defile, k, lingua):
         str_corr += "[" + str(corrispondenze.index(c)) + "]:" + str(c[0]) + ":[" + c[1] + "], "  # compongo la stringa
         corrispondenze[corrispondenze.index(c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
 
-    f = open(enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_max_w.corr.txt", "w")  # salvo la stringa in un file
-    f.write(first + "\n")
+    f = open(lingua + "." + enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_max_w.corr.txt", "w")  # salvo la stringa in un file
+    f.write(lingua + "\n")
     f.write(str_corr[:-2])
     f.close()
 
@@ -956,14 +942,14 @@ def similarity_k_min_words(enfile, defile, k, lingua):
     # if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "de"
+        first = "ted"
         words_one = words_de  # considero la lista delle parole tedesche come la principale
         words_two = words_en  # considero la lista delle parole inglesi come la secondaria
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "en"
+        first = "ing"
         words_one = words_en  # considero la lista delle parole inglesi come la principale
         words_two = words_de  # considero la lista delle parole tedesche come la secondaria
 
@@ -1061,8 +1047,8 @@ def similarity_k_min_words(enfile, defile, k, lingua):
         corrispondenze[corrispondenze.index(
             c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
 
-    f = open(enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_min_w.corr.txt", "w")  # salvo la stringa in un file
-    f.write(first + "\n")
+    f = open(lingua + "." + enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_min_w.corr.txt", "w")  # salvo la stringa in un file
+    f.write(lingua + "\n")
     f.write(str_corr[:-2])
     f.close()
 
@@ -1097,14 +1083,14 @@ def similarity_k_sum_words(enfile, defile, k, lingua):
     # if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "de"
+        first = "ted"
         words_one = words_de  # considero la lista delle parole tedesche come la principale
         words_two = words_en  # considero la lista delle parole inglesi come la secondaria
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "en"
+        first = "ing"
         words_one = words_en  # considero la lista delle parole inglesi come la principale
         words_two = words_de  # considero la lista delle parole tedesche come la secondaria
 
@@ -1201,8 +1187,8 @@ def similarity_k_sum_words(enfile, defile, k, lingua):
         str_corr += "[" + str(corrispondenze.index(c)) + "]:" + str(c[0]) + ":[" + c[1] + "], "  # compongo la stringa
         corrispondenze[corrispondenze.index(c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
 
-    f = open(enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_sum_w.corr.txt", "w")  # salvo la stringa in un file
-    f.write(first + "\n")
+    f = open(lingua + "." + enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_sum_w.corr.txt", "w")  # salvo la stringa in un file
+    f.write(lingua + "\n")
     f.write(str_corr[:-2])
     f.close()
 
