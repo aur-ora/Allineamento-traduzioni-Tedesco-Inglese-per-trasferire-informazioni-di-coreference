@@ -219,6 +219,7 @@ def precision_recall_f1(enfile, caso, k,  file_ing, file_ted):
     file_ted = "".join(file_ted)
     file_ted = file_ted.split("_______________________________________________________________________________________________________________________________________________\n")
     ted = []
+
     for el in file_ted:
         if el.split("\n") != ['']:
             ted.append(el.split("\n"))
@@ -228,24 +229,30 @@ def precision_recall_f1(enfile, caso, k,  file_ing, file_ted):
             if el == "":
                 lista.remove(el)
 
-        if lista[0].split("-")[0] == caso and int(lista[0].split("-")[1]) == k:
+        if lista[0].split("-")[0] == caso and int(lista[0].split("-")[1]) == k:  # prendo il caso e la k giusti
             frasi_ing = int(lista[1].split(" = ")[1])
             vp_ing = int(lista[2].split(" = ")[1])
             vn_ing = int(lista[3].split(" = ")[1])
             fp_ing = int(lista[4].split(" = ")[1])
             fn_ing = int(lista[5].split(" = ")[1])
+            precision_ing = float(lista[6].split(" = ")[1])
+            recall_ing = float(lista[7].split(" = ")[1])
+            f1_ing = float(lista[8].split(" = ")[1])
 
     for lista in ted:
         for el in lista:
             if el == "":
                 lista.remove(el)
 
-        if lista[0].split("-")[0] == caso and int(lista[0].split("-")[1]) == k:
+        if lista[0].split("-")[0] == caso and int(lista[0].split("-")[1]) == k:    # prendo il caso e la k giusti
             frasi_ted = int(lista[1].split(" = ")[1])
             vp_ted = int(lista[2].split(" = ")[1])
             vn_ted = int(lista[3].split(" = ")[1])
             fp_ted = int(lista[4].split(" = ")[1])
             fn_ted = int(lista[5].split(" = ")[1])
+            precision_ted = float(lista[6].split(" = ")[1])
+            recall_ted = float(lista[7].split(" = ")[1])
+            f1_ted = float(lista[8].split(" = ")[1])
 
     frasi_tot = (frasi_ing + frasi_ted)
     vp_tot = (vp_ted + vp_ing) / frasi_tot
@@ -253,12 +260,19 @@ def precision_recall_f1(enfile, caso, k,  file_ing, file_ted):
     fn_tot = (fn_ted + fn_ing) / frasi_tot
     vn_tot = (vn_ted + vn_ing) / frasi_tot
 
-    perc_fp = (fp_tot/frasi_tot) * 100
-    perc_fn = (fn_tot/frasi_tot) * 100
+    perc_fp = fp_tot * 100
+    perc_fn = fn_tot * 100
 
     recall = vp_tot/(vp_tot + fn_tot)
     precision = vp_tot/(vp_tot + fp_tot)
-    f1 = 2 / ((1/precision) + (1/recall))
+    if recall == 0 and precision == 0:
+        f1 = 0.0
+    elif recall == 0:
+        f1 = 2 / (1 / precision)
+    elif precision == 0:
+        f1 = 2 / (1 / recall)
+    else:
+        f1 = 2 / ((1/precision) + (1/recall))
 
     file = open("analysis_final." + enfile_name[:len(enfile_name) - 7] + ".txt", "a")
     file.write("_______________________________________________________________________________________________________________________________________________\n")
@@ -278,6 +292,12 @@ def precision_recall_f1(enfile, caso, k,  file_ing, file_ted):
     file.write("\n")
     file.write("# FALSI NEGATIVI ing->ted = " + str(fn_ing) + "\n")
     file.write("\n")
+    file.write("PRECISION ing->ted = " + str(precision_ing) + "\n")
+    file.write("\n")
+    file.write("RECALL ing->ted = " + str(recall_ing) + "\n")
+    file.write("\n")
+    file.write("F1 ing->ted = " + str(f1_ing) + "\n")
+    file.write("\n")
     file.write("ANALISI CONSIDERANDO UNA AD UNA LE FRASI TEDESCHE E K VOLTE QUELLE INGLESE \n")
     file.write("\n")
     file.write("# frasi ted->ing = " + str(frasi_ted) + "\n")
@@ -290,6 +310,12 @@ def precision_recall_f1(enfile, caso, k,  file_ing, file_ted):
     file.write("\n")
     file.write("# FALSI NEGATIVI ted->ing = " + str(fn_ted) + "\n")
     file.write("\n")
+    file.write("PRECISION ted->ing = " + str(precision_ted) + "\n")
+    file.write("\n")
+    file.write("RECALL ted->ing = " + str(recall_ted) + "\n")
+    file.write("\n")
+    file.write("F1 ted->ing = " + str(f1_ted) + "\n")
+    file.write("\n")
     file.write("\n")
     file.write("# frasi totali = " + str(frasi_tot) + "\n")
     file.write("\n")
@@ -301,17 +327,21 @@ def precision_recall_f1(enfile, caso, k,  file_ing, file_ted):
     file.write("\n")
     file.write("# FALSI NEGATIVI = " + str(fn_tot) + "\n")
     file.write("\n")
+    file.write("PERCENTUALE DI VERI POSITIVI = " + str(vp_tot * 100) + " %" + "\n")
+    file.write("\n")
+    file.write("PERCENTUALE DI VERI NEGATIVI = " + str(vn_tot * 100) + " %" + "\n")
+    file.write("\n")
     file.write("PERCENTUALE DI FALSI POSITIVI = " + str(perc_fp) + " %" + "\n")
     file.write("\n")
     file.write("PERCENTUALE DI FALSI NEGATIVI = " + str(perc_fn) + " %" + "\n")
     file.write("\n")
-    file.write("RECALL = " + str(recall) + "\n")
-    file.write("\n")
     file.write("PRECISION = " + str(precision) + "\n")
     file.write("\n")
-    file.write("% RECALL = " + str(recall * 100) + " %" + "\n")
+    file.write("RECALL = " + str(recall) + "\n")
     file.write("\n")
     file.write("% PRECISION = " + str(precision * 100) + " %" + "\n")
+    file.write("\n")
+    file.write("% RECALL = " + str(recall * 100) + " %" + "\n")
     file.write("\n")
     file.write("F1 = " + str(f1) + "\n")
     file.write("\n")
@@ -338,27 +368,85 @@ def auto_analysis(enfile, caso, k, lingua):
     corr_found = "".join(corr_found).split(", ")  # prendo il file con le info sulle corrispondenze trovate e lo trasformo in lista
     corr_right = "".join(corr_right).replace("\n", "").split(", ")  # prendo il file con le info sulle corrispondenze giuste e lo trasformo in lista
 
-    for i in range(min(len(corr_right), len(corr_found))):  # per ogni indice della lista più corta
-        if corr_right[i] == corr_found[i][:-6]:  # se gli elementi ad indice uguale sono uguali
-            if corr_found[i].split(":")[2] == "[neg]":  # allora se quello trovato ha -1 in seconda posizione (indice inglese)
+    i = 0  # indice per le corrispondenze trovate
+    j = 0  # indice per le corrispondenze corrette
+    while i < len(corr_found) and j < len(corr_right):  # finche' il contatore non arriva alla lunghezza della lista di coppie di corrispondenze
+        if corr_right[j] == corr_found[i][:-6]:  # se gli elementi ad indice uguale sono uguali
+            if corr_found[i].split(":")[2] == "[neg]":  # allora se non ha corrispondenza (neg)
+                if corr_found[i].split(":")[1] == "[-1]":  # se c'e' un -1 (in questo caso da entrambi perche' sono uguali le coppie)
+                    analisi.append("VN")  # significa che non ha corrispondenza
+                    i += 1  # aumento il contatore delle trovate
+                    j += 1  # aumento il contatore delle corrette
+                else:  # se non c'e' un -1, significa che avrebbe dovuto esserci, ma non l'ha trovata quindi
+                    analisi.append("FN")  # e' un falso negativo
+                    i += 1  # aumento il contatore delle trovate
+                    j += 1  # aumento il contatore delle corrette
+            else:  # se ha corrispondenza (pos) significa che
+                analisi.append("VP")  # e' un vero positivo, in quanto le due coppie confrontate sono uguali
+                i += 1  # aumento il contatore delle trovate
+                j += 1  # aumento il contatore delle corrette
+        else:  # se gli elementi ad indice uguale sono diversi
+            if corr_found[i].split(":")[0] == corr_right[j].split(":")[0]:  # se il primo elemento della coppia e' uguale (quindi non abbiamo più indici a sinistra)
                 if corr_found[i].split(":")[1] == "[-1]":
-                    analisi.append("VN")
+                    analisi.append("FN")  # e' un falso negativo
+                    i += 1  # aumento il contatore delle trovate
+                    j += 1  # aumento il contatore delle corrette
+                elif corr_right[j].split(":")[1] == "[-1]":
+                    if corr_found[i].split(":")[2] == "[neg]":
+                        analisi.append("VN")  # e' un vero negativo
+                        i += 1  # aumento il contatore delle trovate
+                        j += 1  # aumento il contatore delle corrette
+                    else:
+                        analisi.append("FP")  # e' un falso positivo
+                        i += 1  # aumento il contatore delle trovate
+                        j += 1  # aumento il contatore delle corrette
                 else:
-                    analisi.append("FN")  # allora e' un falso negativo
-            else:
-                analisi.append("VP")  # e' un vero positivo
+                    if corr_found[i].split(":")[2] == "[neg]":
+                        analisi.append("FN")  # e' un falso negativo
+                        i += 1  # aumento il contatore delle trovate
+                        j += 1  # aumento il contatore delle corrette
+                    else:
+                        analisi.append("FP")  # e' un falso positivo
+                        i += 1  # aumento il contatore delle trovate
+                        j += 1  # aumento il contatore delle corrette
+            else:  # se il primo elemento della coppia e' diverso tra le found e right (abbiamo più indici a sinistra)
+                lun = len(corr_right[j].split(":")[0][1:-1].split(","))  # prendo la lunghezza della lista di indici a sinistra
 
-        else:  # se gli elementi non sono uguali
-            if corr_found[i].split(":")[2] == "[neg]":  # allora se quello trovato ha -1 in seconda posizione (indice inglese)
-                analisi.append("FN")  # allora e' un falso negativo
-            else:  # se non ha -1
-                analisi.append("FP")  # e' un falso positivo
+                for ll in range(lun):  # per la lunghezza della lista
+                    if corr_found[i].split(":")[1] == "[-1]":
+                        analisi.append("FN")  # e' un falso negativo
+                        i += 1  # aumento il contatore delle trovate
+                    elif corr_right[j].split(":")[1] == "[-1]":
+                        if corr_found[i].split(":")[2] == "[neg]":
+                            analisi.append("VN")  # e' un vero negativo
+                            i += 1  # aumento il contatore delle trovate
+                        else:
+                            analisi.append("FP")  # e' un falso positivo
+                            i += 1  # aumento il contatore delle trovate
+                    else:
+                        if corr_found[i].split(":")[2] == "[neg]":
+                            analisi.append("FN")  # e' un falso negativo
+                            i += 1  # aumento il contatore delle trovate
+                        else:
+                            analisi.append("FP")  # e' un falso positivo
+                            i += 1  # aumento il contatore delle trovate
+                j += 1  # aumento il contatore delle corrette
 
-    frasi_tot = len(corr_right)
+    frasi_tot = len(corr_found)
     vp_tot = analisi.count("VP")
     vn_tot = analisi.count("VN")
     fp_tot = analisi.count("FP")
     fn_tot = analisi.count("FN")
+    recall = vp_tot/(vp_tot + fn_tot)
+    precision = vp_tot/(vp_tot + fp_tot)
+    if recall == 0 and precision == 0:
+        f1 = 0.0
+    elif recall == 0:
+        f1 = 2 / (1 / precision)
+    elif precision == 0:
+        f1 = 2 / (1 / recall)
+    else:
+        f1 = 2 / ((1/precision) + (1/recall))
 
     file = open("analysis_" + lingua + "." + enfile_name[:len(enfile_name) - 7] + ".txt", "a")
     file.write(caso + "-" + str(k) + "\n")
@@ -372,8 +460,22 @@ def auto_analysis(enfile, caso, k, lingua):
     file.write("fp_tot = " + str(fp_tot) + "\n")
     file.write("\n")
     file.write("fn_tot = " + str(fn_tot) + "\n")
+    file.write("\n")
+    file.write("precision = " + str(precision) + "\n")
+    file.write("\n")
+    file.write("recall = " + str(recall) + "\n")
+    file.write("\n")
+    file.write("f1 = " + str(f1) + "\n")
     file.write("_______________________________________________________________________________________________________________________________________________\n")
     file.close()
+
+    if enfile_name.startswith("de") and lingua == "ted":  # se e' un originale tedesco nel verso ted->ing
+        f = open("list_analysis." + caso + "." + str(k) + "." + enfile_name[:len(enfile_name) - 7] + ".txt", "w")
+        s = ""
+        for el in analisi:
+            s += el + "||"  # salvo la lista dei veri/falsi positivi/negativi, da poter usare per cercare le coreference
+        f.write(s[:-2])
+        f.close()
 
     return 1
 
@@ -401,15 +503,12 @@ def similarity_k_min_length(enfile, defile, k, lingua):
     first = ""  # stringa che indica quale indice considerare prima quando costriusco la stringa degli indici
 
     if lingua == "ted":
-    #if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "ted"
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "ing"
 
     index_one = 0  # indice che si spostera' di 1 ogni volta
     index_two = 0  # indice che si spostera' di 1 rispetto all'indice dell'ultimo match
@@ -462,7 +561,7 @@ def similarity_k_min_length(enfile, defile, k, lingua):
                 ff = set()  # inizializzo l'insieme che conterra' i synset
                 ind = []
                 for fr in frasi:  # per ogni coppia nella lista
-                    ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
+                    ff = ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
                     ind.append(fr[2])
 
                 common = len(set(set_one[index_one]).intersection(ff))  # ricavo l'intersezione della coppia di insiemi di synset
@@ -479,14 +578,23 @@ def similarity_k_min_length(enfile, defile, k, lingua):
                     sup_thres.append(value)  # aggiungo solo quello maggiore della soglia
 
             if sup_thres:  # se ce n'e' almeno una
-                m = max(sup_thres)  # prendo la perc massima
-                corrispondenze.append((m[1], "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
+                ma = max(sup_thres)  # prendo la perc massima
+                valori_uguali = []
+                for v in sup_thres:  # controllo se ci sono altre frasi con la stessa perc
+                    if v[0] == ma[0]:
+                        valori_uguali.append(v)  # li aggiungo alla lista
+                lun_list = []
+                for i in valori_uguali:  # delle frasi con perc uguale
+                    lun_list.append((len(i[1]), i))  # prendo la lunghezza della lista di indici
+                minn = min(lun_list)  # prendo quello con lunghezza minore
+                m = minn[1]  # ricavo la perc con gli indici
+                corrispondenze.append((str(m[1]).replace(", ", ","), "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
                 index_two = max(m[1]) + 1  # aumento l'indice con il massimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
             else:  # se non ce n'e' manco manco una che supera la soglia
                 m = max(no_corr)  # prendo quella con perc massima tra le singole frasi
                 corrispondenze.append(([m[2]], "neg"))  # e aggiungo l'indice alla lista delle corrispondenze insieme a neg che mi indica che non e' la traduzione
-                index_two = m[2] + 1  # aumento l'indice con l'ultimo match + 1
+                index_two += 1  # aumento l'indice con l'ultimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
 
     if len(corrispondenze) < len(set_one):  # se la lista delle corrispondenze e' minore # delle frasi
@@ -495,7 +603,6 @@ def similarity_k_min_length(enfile, defile, k, lingua):
 
     str_corr = ""  # stringa che conterra' le corrispondenze in formato [indice set_one]:[indice set_two]
 
-    # if first == "ted":  # se la frase singola e' tedesca
     for c in corrispondenze:  # per ogni indice nella lista
         str_corr += "[" + str(corrispondenze.index(c)) + "]:" + str(c[0]) + ":[" + c[1] + "], "  # compongo la stringa
         corrispondenze[corrispondenze.index(c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
@@ -523,23 +630,17 @@ def similarity_k_max_length(enfile, defile, k, lingua):
     # carica la media che uso come identificatore di riferimento
     with open("media_casi_arit.json", "r") as f:
         mean = json.load(f)
-    # file = open("casi_perc_" + enfile_name[3:len(enfile_name) - 7] + ".txt", "w")  # file che conterra' i 6 dizionari con le info sulle traduzioni di un solo testo
 
     list_set_en = diz_en["list_set"]  # ricavo la lista di liste dei synset dal dizionario nel file per l'inglese
     list_set_de = diz_de["list_set"]  # ricavo la lista di liste dei synset dal dizionario nel file per il tedesco
 
-    first = ""  # stringa che indica quale indice considerare prima quando costriusco la stringa degli indici
-
     if lingua == "ted":
-    # if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "ted"
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "ing"
 
     index_one = 0  # indice che si spostera' di 1 ogni volta
     index_two = 0  # indice che si spostera' di 1 rispetto all'indice dell'ultimo match
@@ -592,7 +693,7 @@ def similarity_k_max_length(enfile, defile, k, lingua):
                 ff = set()  # inizializzo l'insieme che conterra' i synset
                 ind = []
                 for fr in frasi:  # per ogni coppia nella lista
-                    ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
+                    ff = ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
                     ind.append(fr[2])
 
                 common = len(set(set_one[index_one]).intersection(ff))  # ricavo l'intersezione della coppia di insiemi di synset
@@ -609,15 +710,23 @@ def similarity_k_max_length(enfile, defile, k, lingua):
                     sup_thres.append(value)  # aggiungo solo quello maggiore della soglia
 
             if sup_thres:  # se ce n'e' almeno una
-                m = max(sup_thres)  # prendo la perc massima
-                corrispondenze.append((m[1], "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
+                ma = max(sup_thres)  # prendo la perc massima
+                valori_uguali = []
+                for v in sup_thres:  # controllo se ci sono altre frasi con la stessa perc
+                    if v[0] == ma[0]:
+                        valori_uguali.append(v)  # li aggiungo alla lista
+                lun_list = []
+                for i in valori_uguali:  # delle frasi con perc uguale
+                    lun_list.append((len(i[1]), i))  # prendo la lunghezza della lista di indici
+                minn = min(lun_list)  # prendo quello con lunghezza minore
+                m = minn[1]  # ricavo la perc con gli indici
+                corrispondenze.append((str(m[1]).replace(", ", ","), "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
                 index_two = max(m[1]) + 1  # aumento l'indice con il massimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
             else:  # se non ce n'e' manco manco una che supera la soglia
                 m = max(no_corr)  # prendo quella con perc massima tra le singole frasi
-                corrispondenze.append(([m[2]],
-                                       "neg"))  # e aggiungo l'indice alla lista delle corrispondenze insieme a neg che mi indica che non e' la traduzione
-                index_two = m[2] + 1  # aumento l'indice con l'ultimo match + 1
+                corrispondenze.append(([m[2]], "neg"))  # e aggiungo l'indice alla lista delle corrispondenze insieme a neg che mi indica che non e' la traduzione
+                index_two += 1  # aumento l'indice con l'ultimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
 
     if len(corrispondenze) < len(set_one):  # se la lista delle corrispondenze e' minore # delle frasi
@@ -627,7 +736,6 @@ def similarity_k_max_length(enfile, defile, k, lingua):
 
     str_corr = ""  # stringa che conterra' le corrispondenze in formato [indice set_one]:[indice set_two]
 
-    # if first == "ted":  # se la frase singola e' tedesca
     for c in corrispondenze:  # per ogni indice nella lista
         str_corr += "[" + str(corrispondenze.index(c)) + "]:" + str(c[0]) + ":[" + c[1] + "], "  # compongo la stringa
         corrispondenze[corrispondenze.index(
@@ -657,23 +765,17 @@ def similarity_k_union(enfile, defile, k, lingua):
     # carica la media che uso come identificatore di riferimento
     with open("media_casi_arit.json", "r") as f:
         mean = json.load(f)
-    # file = open("casi_perc_" + enfile_name[3:len(enfile_name) - 7] + ".txt", "w")  # file che conterra' i 6 dizionari con le info sulle traduzioni di un solo testo
 
     list_set_en = diz_en["list_set"]  # ricavo la lista di liste dei synset dal dizionario nel file per l'inglese
     list_set_de = diz_de["list_set"]  # ricavo la lista di liste dei synset dal dizionario nel file per il tedesco
 
-    first = ""  # stringa che indica quale indice considerare prima quando costriusco la stringa degli indici
-
     if lingua == "ted":
-    #if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "ted"
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "ing"
 
     index_one = 0  # indice che si spostera' di 1 ogni volta
     index_two = 0  # indice che si spostera' di 1 rispetto all'indice dell'ultimo match
@@ -726,7 +828,7 @@ def similarity_k_union(enfile, defile, k, lingua):
                 ff = set()  # inizializzo l'insieme che conterra' i synset
                 ind = []
                 for fr in frasi:  # per ogni coppia nella lista
-                    ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
+                    ff = ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
                     ind.append(fr[2])
 
                 common = len(set(set_one[index_one]).intersection(ff))  # ricavo l'intersezione della coppia di insiemi di synset
@@ -743,14 +845,23 @@ def similarity_k_union(enfile, defile, k, lingua):
                     sup_thres.append(value)  # aggiungo solo quello maggiore della soglia
 
             if sup_thres:  # se ce n'e' almeno una
-                m = max(sup_thres)  # prendo la perc massima
-                corrispondenze.append((m[1], "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
+                ma = max(sup_thres)  # prendo la perc massima
+                valori_uguali = []
+                for v in sup_thres:  # controllo se ci sono altre frasi con la stessa perc
+                    if v[0] == ma[0]:
+                        valori_uguali.append(v)  # li aggiungo alla lista
+                lun_list = []
+                for i in valori_uguali:  # delle frasi con perc uguale
+                    lun_list.append((len(i[1]), i))  # prendo la lunghezza della lista di indici
+                minn = min(lun_list)  # prendo quello con lunghezza minore
+                m = minn[1]  # ricavo la perc con gli indici
+                corrispondenze.append((str(m[1]).replace(", ", ","), "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
                 index_two = max(m[1]) + 1  # aumento l'indice con il massimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
             else:  # se non ce n'e' manco manco una che supera la soglia
                 m = max(no_corr)  # prendo quella con perc massima tra le singole frasi
                 corrispondenze.append(([m[2]], "neg"))  # e aggiungo l'indice alla lista delle corrispondenze insieme a neg che mi indica che non e' la traduzione
-                index_two = m[2] + 1  # aumento l'indice con l'ultimo match + 1
+                index_two += 1  # aumento l'indice con l'ultimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
 
     if len(corrispondenze) < len(set_one):  # se la lista delle corrispondenze e' minore # delle frasi
@@ -759,11 +870,9 @@ def similarity_k_union(enfile, defile, k, lingua):
 
     str_corr = ""  # stringa che conterra' le corrispondenze in formato [indice set_one]:[indice set_two]
 
-    # if first == "ted":  # se la frase singola e' tedesca
     for c in corrispondenze:  # per ogni indice nella lista
         str_corr += "[" + str(corrispondenze.index(c)) + "]:" + str(c[0]) + ":[" + c[1] + "], "  # compongo la stringa
-        corrispondenze[corrispondenze.index(
-            c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
+        corrispondenze[corrispondenze.index(c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
 
     f = open(lingua + "." + enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_union.corr.txt", "w")  # salvo la stringa in un file
     f.write(lingua + "\n")
@@ -788,27 +897,21 @@ def similarity_k_max_words(enfile, defile, k, lingua):
     # carica la media che uso come identificatore di riferimento
     with open("media_casi_arit.json", "r") as f:
         mean = json.load(f)
-    # file = open("casi_perc_" + enfile_name[3:len(enfile_name) - 7] + ".txt", "w")  # file che conterra' i 6 dizionari con le info sulle traduzioni di un solo testo
 
     list_set_en = diz_en["list_set"]  # ricavo la lista di liste dei synset dal dizionario nel file per l'inglese
     list_set_de = diz_de["list_set"]  # ricavo la lista di liste dei synset dal dizionario nel file per il tedesco
     words_en = diz_en["words"]  # ricavo la lista del numero di parole con synset per frase inglese
     words_de = diz_de["words"]  # ricavo la lista del numero di parole con synset per frase tedesca
 
-    first = ""  # stringa che indica quale indice considerare prima quando costriusco la stringa degli indici
-
     if lingua == "ted":
-    # if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "ted"
         words_one = words_de  # considero la lista delle parole tedesche come la principale
         words_two = words_en  # considero la lista delle parole inglesi come la secondaria
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "ing"
         words_one = words_en  # considero la lista delle parole inglesi come la principale
         words_two = words_de  # considero la lista delle parole tedesche come la secondaria
 
@@ -818,8 +921,6 @@ def similarity_k_max_words(enfile, defile, k, lingua):
     corrispondenze = []  # lista che conterra' gli indici con le corrispondenze
 
     while index_two < len(set_two) and index_one < len(set_one):  # finche' non arrivo all'ultimo match o all'ultima frase singola
-        # print("index_one - " + str(index_one))
-        # print("index_two - " + str(index_two))
         corr = []  # creo la lista che conterra' la coppia di valore di similarita' e l'indice
         no_corr = []
         if index_two + k <= len(set_two):  # se non sto alle ultime due frasi
@@ -865,7 +966,7 @@ def similarity_k_max_words(enfile, defile, k, lingua):
                 ff = set()  # inizializzo l'insieme che conterra' i synset
                 ind = []
                 for fr in frasi:  # per ogni coppia nella lista
-                    ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
+                    ff = ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
                     ind.append(fr[2])
 
                 common = len(set(set_one[index_one]).intersection(ff))  # ricavo l'intersezione della coppia di insiemi di synset
@@ -885,14 +986,23 @@ def similarity_k_max_words(enfile, defile, k, lingua):
                     sup_thres.append(value)  # aggiungo solo quello maggiore della soglia
 
             if sup_thres:  # se ce n'e' almeno una
-                m = max(sup_thres)  # prendo la perc massima
-                corrispondenze.append((m[1], "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
+                ma = max(sup_thres)  # prendo la perc massima
+                valori_uguali = []
+                for v in sup_thres:  # controllo se ci sono altre frasi con la stessa perc
+                    if v[0] == ma[0]:
+                        valori_uguali.append(v)  # li aggiungo alla lista
+                lun_list = []
+                for i in valori_uguali:  # delle frasi con perc uguale
+                    lun_list.append((len(i[1]), i))  # prendo la lunghezza della lista di indici
+                minn = min(lun_list)  # prendo quello con lunghezza minore
+                m = minn[1]  # ricavo la perc con gli indici
+                corrispondenze.append((str(m[1]).replace(", ", ","), "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
                 index_two = max(m[1]) + 1  # aumento l'indice con il massimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
             else:  # se non ce n'e' manco manco una che supera la soglia
                 m = max(no_corr)  # prendo quella con perc massima tra le singole frasi
                 corrispondenze.append(([m[2]], "neg"))  # e aggiungo l'indice alla lista delle corrispondenze insieme a neg che mi indica che non e' la traduzione
-                index_two = m[2] + 1  # aumento l'indice con l'ultimo match + 1
+                index_two += 1  # aumento l'indice con l'ultimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
 
     if len(corrispondenze) < len(set_one):  # se la lista delle corrispondenze e' minore # delle frasi
@@ -901,7 +1011,6 @@ def similarity_k_max_words(enfile, defile, k, lingua):
 
     str_corr = ""  # stringa che conterra' le corrispondenze in formato [indice set_one]:[indice set_two]
 
-    # if first == "ted":  # se la frase singola e' tedesca
     for c in corrispondenze:  # per ogni indice nella lista
         str_corr += "[" + str(corrispondenze.index(c)) + "]:" + str(c[0]) + ":[" + c[1] + "], "  # compongo la stringa
         corrispondenze[corrispondenze.index(c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
@@ -936,20 +1045,15 @@ def similarity_k_min_words(enfile, defile, k, lingua):
     words_en = diz_en["words"]  # ricavo la lista del numero di parole con synset per frase inglese
     words_de = diz_de["words"]  # ricavo la lista del numero di parole con synset per frase tedesca
 
-    first = ""  # stringa che indica quale indice considerare prima quando costriusco la stringa degli indici
-
     if lingua == "ted":
-    # if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "ted"
         words_one = words_de  # considero la lista delle parole tedesche come la principale
         words_two = words_en  # considero la lista delle parole inglesi come la secondaria
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "ing"
         words_one = words_en  # considero la lista delle parole inglesi come la principale
         words_two = words_de  # considero la lista delle parole tedesche come la secondaria
 
@@ -1005,7 +1109,7 @@ def similarity_k_min_words(enfile, defile, k, lingua):
                 ff = set()  # inizializzo l'insieme che conterra' i synset
                 ind = []
                 for fr in frasi:  # per ogni coppia nella lista
-                    ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
+                    ff = ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
                     ind.append(fr[2])
 
                 common = len(set(set_one[index_one]).intersection(ff))  # ricavo l'intersezione della coppia di insiemi di synset
@@ -1025,14 +1129,23 @@ def similarity_k_min_words(enfile, defile, k, lingua):
                     sup_thres.append(value)  # aggiungo solo quello maggiore della soglia
 
             if sup_thres:  # se ce n'e' almeno una
-                m = max(sup_thres)  # prendo la perc massima
-                corrispondenze.append((m[1], "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
+                ma = max(sup_thres)  # prendo la perc massima
+                valori_uguali = []
+                for v in sup_thres:  # controllo se ci sono altre frasi con la stessa perc
+                    if v[0] == ma[0]:
+                        valori_uguali.append(v)  # li aggiungo alla lista
+                lun_list = []
+                for i in valori_uguali:  # delle frasi con perc uguale
+                    lun_list.append((len(i[1]), i))  # prendo la lunghezza della lista di indici
+                minn = min(lun_list)  # prendo quello con lunghezza minore
+                m = minn[1]  # ricavo la perc con gli indici
+                corrispondenze.append((str(m[1]).replace(", ", ","), "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
                 index_two = max(m[1]) + 1  # aumento l'indice con il massimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
             else:  # se non ce n'e' manco manco una che supera la soglia
                 m = max(no_corr)  # prendo quella con perc massima tra le singole frasi
                 corrispondenze.append(([m[2]], "neg"))  # e aggiungo l'indice alla lista delle corrispondenze insieme a neg che mi indica che non e' la traduzione
-                index_two = m[2] + 1  # aumento l'indice con l'ultimo match + 1
+                index_two += 1  # aumento l'indice con l'ultimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
 
     if len(corrispondenze) < len(set_one):  # se la lista delle corrispondenze e' minore # delle frasi
@@ -1041,11 +1154,9 @@ def similarity_k_min_words(enfile, defile, k, lingua):
 
     str_corr = ""  # stringa che conterra' le corrispondenze in formato [indice set_one]:[indice set_two]
 
-    # if first == "ted":  # se la frase singola e' tedesca
     for c in corrispondenze:  # per ogni indice nella lista
         str_corr += "[" + str(corrispondenze.index(c)) + "]:" + str(c[0]) + ":[" + c[1] + "], "  # compongo la stringa
-        corrispondenze[corrispondenze.index(
-            c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
+        corrispondenze[corrispondenze.index(c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
 
     f = open(lingua + "." + enfile_name[:len(enfile_name) - 7] + "." + str(k) + "_min_w.corr.txt", "w")  # salvo la stringa in un file
     f.write(lingua + "\n")
@@ -1077,20 +1188,15 @@ def similarity_k_sum_words(enfile, defile, k, lingua):
     words_en = diz_en["words"]  # ricavo la lista del numero di parole con synset per frase inglese
     words_de = diz_de["words"]  # ricavo la lista del numero di parole con synset per frase tedesca
 
-    first = ""  # stringa che indica quale indice considerare prima quando costriusco la stringa degli indici
-
     if lingua == "ted":
-    # if len(list_set_en) >= len(list_set_de):  # se e' il tedesco ad avere meno frasi
         set_one = list_set_de  # considero le liste di synset tedesche una ad uno
         set_two = list_set_en  # considero le liste di synset inglesi k alla volta
-        first = "ted"
         words_one = words_de  # considero la lista delle parole tedesche come la principale
         words_two = words_en  # considero la lista delle parole inglesi come la secondaria
 
     else:  # se e' l'inglese ad avere meno frasi
         set_one = list_set_en  # considero le liste di synset inglesi una ad uno
         set_two = list_set_de  # considero le liste di synset tedesche k alla volta
-        first = "ing"
         words_one = words_en  # considero la lista delle parole inglesi come la principale
         words_two = words_de  # considero la lista delle parole tedesche come la secondaria
 
@@ -1146,7 +1252,7 @@ def similarity_k_sum_words(enfile, defile, k, lingua):
                 ff = set()  # inizializzo l'insieme che conterra' i synset
                 ind = []
                 for fr in frasi:  # per ogni coppia nella lista
-                    ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
+                    ff = ff.union(fr[1])  # unisco l'insieme della coppia all'insieme ff
                     ind.append(fr[2])
 
                 common = len(set(set_one[index_one]).intersection(ff))  # ricavo l'intersezione della coppia di insiemi di synset
@@ -1166,14 +1272,23 @@ def similarity_k_sum_words(enfile, defile, k, lingua):
                     sup_thres.append(value)  # aggiungo solo quello maggiore della soglia
 
             if sup_thres:  # se ce n'e' almeno una
-                m = max(sup_thres)  # prendo la perc massima
-                corrispondenze.append((m[1], "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
+                ma = max(sup_thres)  # prendo la perc massima
+                valori_uguali = []
+                for v in sup_thres:  # controllo se ci sono altre frasi con la stessa perc
+                    if v[0] == ma[0]:
+                        valori_uguali.append(v)  # li aggiungo alla lista
+                lun_list = []
+                for i in valori_uguali:  # delle frasi con perc uguale
+                    lun_list.append((len(i[1]), i))  # prendo la lunghezza della lista di indici
+                minn = min(lun_list)  # prendo quello con lunghezza minore
+                m = minn[1]  # ricavo la perc con gli indici
+                corrispondenze.append((str(m[1]).replace(", ", ","), "pos"))  # e aggiungo tutti gli indici alla lista delle corrispondenze insieme a pos che indica che e' la traduzione
                 index_two = max(m[1]) + 1  # aumento l'indice con il massimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
             else:  # se non ce n'e' manco manco una che supera la soglia
                 m = max(no_corr)  # prendo quella con perc massima tra le singole frasi
                 corrispondenze.append(([m[2]], "neg"))  # e aggiungo l'indice alla lista delle corrispondenze insieme a neg che mi indica che non e' la traduzione
-                index_two = m[2] + 1  # aumento l'indice con l'ultimo match + 1
+                index_two += 1  # aumento l'indice con l'ultimo match + 1
                 index_one += 1  # aumento di 1 quello della frase singola
 
     if len(corrispondenze) < len(set_one):  # se la lista delle corrispondenze e' minore # delle frasi
@@ -1182,7 +1297,6 @@ def similarity_k_sum_words(enfile, defile, k, lingua):
 
     str_corr = ""  # stringa che conterra' le corrispondenze in formato [indice set_one]:[indice set_two]
 
-    # if first == "ted":  # se la frase singola e' tedesca
     for c in corrispondenze:  # per ogni indice nella lista
         str_corr += "[" + str(corrispondenze.index(c)) + "]:" + str(c[0]) + ":[" + c[1] + "], "  # compongo la stringa
         corrispondenze[corrispondenze.index(c)] = "preso"  # sostituisco l'indice con una stringa in modo da segnare che e' gia' stato considerato
