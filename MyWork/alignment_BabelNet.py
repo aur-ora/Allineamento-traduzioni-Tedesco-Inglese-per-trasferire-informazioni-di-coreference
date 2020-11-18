@@ -1,14 +1,9 @@
-from itertools import chain
-
 import spacy
 import json
 from spacy_babelnet import BabelnetAnnotator
 from bs4 import BeautifulSoup
 from pathlib import Path
 import re
-
-# from itertools import chain
-# from translate import Translator
 
 stopwordsEN = "".join(open("english-stop-words-large.txt", "r").readlines())  # carico il file delle stopword inglesi
 stopwordsDE = "".join(open("german-stop-words.txt", "r").readlines())  # carico il file delle stopword tedesche
@@ -207,7 +202,9 @@ def my_coreference(enfile, defile, analysis):
     with open("pronouns_all.json") as f:
         pron_all = json.load(f)
 
-    names = open("names_pcr." + enfile.name[:len(enfile.name) - 8] + "en.txt", "r")
+    names = open("names_pcr." + enfile.name[:len(enfile.name) - 8] + "en.txt", "r").readlines()
+    for name in names:
+        names[names.index(name)] = name.replace("\n", "")
 
     sent_ = open(enfile.name[:len(enfile.name) - 4] + ".sent.coref.txt", "r").readlines()
 
@@ -301,7 +298,11 @@ def perfect_coreference(enfile, defile):
     with open("pronouns_all.json") as f:
         pron_all = json.load(f)
 
-    names = open("names_pcr." + enfile.name[:len(enfile.name) - 8] + "en.txt", "r")
+    namess = open("names_pcr." + enfile.name[:len(enfile.name) - 8] + "en.txt", "r").readlines()
+    names = []
+    for name in namess:
+        for n in name.split(","):
+            names.append(n.replace("\n", ""))
 
     sent_ = open(enfile.name[:len(enfile.name) - 4] + ".sent.coref.txt", "r").readlines()
 
@@ -389,7 +390,7 @@ def coreferences(i, sent_de, sent_core, pron, names):
                 token.pos_) == "PRON") and token.nbor().text == "(":  # se la parola e' un pronome personale, possessivo ed e' seguito da una parentesi
             part_sent = str(sent_core[i][token.i:])  # prendo tutta la frase a partire dal pronome corrente e la salvo
             parola = part_sent[part_sent.index("(") + 1: part_sent.index(")")]  # prendo la parola tra parentesi alla destra del pronome e la salvo
-            if parola in chain(*names):
+            if parola in names or parola[0].isupper():
                 pro_en.append((token.text, token.i, "(" + parola + ")"))  # aggiungo alla lista la tripla di pronome indice e parola
             else:
                 pro_en.append((token.text, token.i, ""))
@@ -441,7 +442,7 @@ def get_coreference(enfile):
     file.close()
     f = open(file_pcr, "r")  # riapro il lettura il file appena salvato
     lines = f.readlines()  # creo una lista di stringhe che contiene le frasi del testo
-    names = lines[0].replace("\t", "").replace("Characters", "").replace("\n", "")  # ricavo i nomi dei personaggi trovati con la coreference, elimino le parentesi, il tab, l'accapo e la stringa "Characters" (introdotta con la coref)
+    names = lines[0][:lines[0].index("Text")].replace("\t", "").replace("Characters", "").replace("\n", "")  # ricavo i nomi dei personaggi trovati con la coreference, elimino le parentesi, il tab, l'accapo e la stringa "Characters" (introdotta con la coref)
     names = re.sub("([\(\[]).*?([\)\]])", "\g<1>\g<2>", names).replace("()", "_")  # elimino le parentesi con il contenuto e lo sostiuisco con _ per poi riconoscere gli alias
     names = list(set(re.sub("\d", ",", names).split(",")))  # la faccio diventare una lista, ma prima elimino i numeri e i duplicati
     for i in range(len(names)):  # elimino gli eventuali spazi
@@ -465,8 +466,10 @@ def get_coreference(enfile):
     f1.close()
     f.close()
 
-    f2 = open("names_pcr" + enfile.name, "w")
-    f2.write(str(names))
+    f2 = open("names_pcr." + enfile.name, "w")
+    for name in names:
+        for n in name:
+            f2.write(n + "\n")
     f2.close()
 
     return 1  # ritorno la lista dei nomi individuati con la coreference
