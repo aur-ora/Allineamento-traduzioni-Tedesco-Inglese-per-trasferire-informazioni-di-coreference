@@ -134,10 +134,46 @@ def create_set_de(defile):
     return sent_de_3, synset_de, tok_syn_de, count_words
 
 
+# Il metodo coref_da_intero prende in input la porzione di testo di cui si vuole prendere la coreference
+# quindi genera in output un file identico a enfile_parte ma con le coreference, prendendo il testo completo con lo stesso nome
+# il testo completo e' quello che esce dopo aver runnato save_sent_coref(enfile), in cui enfile e' il file con coreference non spezzato bene
+def prendi_coref_da_testo(enfile):
+    enfile_intero = open(enfile.name[:len(enfile.name) - 8] + "en.sent.coref.txt", "r").readlines()  # prendo il testo completo che corrisponde al testo in input
+    with open("sent_en_" + enfile.name[:len(enfile.name) - 4] + ".json", "r") as f:
+        diz_en = json.load(f)
+    enf = diz_en["sent"]
+    regex = re.compile(r'[\n\r\t]')
+    r = re.compile(r" {2,}")
+
+    frasi_coref = []  # lista che conterra' solo le frasi con coreference che ci interessano
+
+    i = 0  # indice per testo parziale
+    j = 0  # indice per testo completo
+    while i < len(enf) and j < len(enfile_intero):  # finche' non finisce la lista di frasi del testo corto o del testo completo
+        if re.sub(r, " ", re.sub(r"\([a-zA-Z ]+\)", "", enfile_intero[j])).replace("’", "'").replace("   ", " ").replace("- ", "-").replace(" - ", "-") \
+                .replace(" -", "-").replace(" — ", "—").replace("— ", "—").replace(" —", "—").replace("--", "—").replace(" ;", ";").replace(" :", ":") \
+                .replace("``", "\"").replace("''", "\"").replace(" ,", ",").replace(" .", ".").replace(" ?", "?").replace(" !", "!").replace("  ", " ").strip() \
+                == re.sub(r, " ", re.sub(r"\([a-zA-Z ]+\)", "", enf[i])).replace("   ", " ").replace("- ", "-").replace(" - ", "-").replace(" -", "-") \
+                .replace(" — ", "—").replace("— ", "—").replace(" —", "—").replace("--", "—").replace("’", "'").replace(" ;", ";").replace(" :", ":") \
+                .replace(" ,", ",").replace(" .", ".").replace(" ?", "?").replace(" !", "!").replace("  ", " ").strip():  # se le due frasi senza corefernce (e altri aspetti) sono uguali
+            frasi_coref.append(enfile_intero[j])  # aggiungi la frase nella lista
+            i += 1  # vai avanti con l'indice nella parte di testo
+            j += 1  # vai avanti con l'indice nel testo completo
+        else:  # se sono diversi
+            j += 1  # vai avanti con l'indice nel testo completo
+
+    f = open(enfile.name[:len(enfile.name) - 4] + ".sent.coref.txt", "w")
+    for i in frasi_coref:
+        f.write(i)
+    f.close()
+    return 1
+
+
 # Il metodo same_sentence ricava la percentuale di similarita' tra la frase inglese e tedesca dei testi dati in input, e se la similarita' e' maggiore della percentuale
 # allora, se l'originale e' tedesco, ricaviamo le info sulla coreference dal testo tradotto in inglese e le trasferiamo al testo tedesco
 # se l'originale e' inglese, ricaviamo le info sul numero e genere delle parole tedesche,
 # se la similarita' e' minore, controlliamo se unendo k frasi prima e/o dopo la frase la similitarita' e' maggiore
+
 
 # il metodo save_sent_coref salva le frasi spezzate correttamente del testo con coreference in un file
 def save_sent_coref(enfile):
@@ -170,6 +206,8 @@ def my_coreference(enfile, defile, analysis):
 
     with open("pronouns_all.json") as f:
         pron_all = json.load(f)
+
+    names = open("names_pcr." + enfile.name[:len(enfile.name) - 8] + "en.txt", "r")
 
     sent_ = open(enfile.name[:len(enfile.name) - 4] + ".sent.coref.txt", "r").readlines()
 
@@ -231,8 +269,8 @@ def my_coreference(enfile, defile, analysis):
     sent_core_de_all = []  # lista che conterra' le frasi che hanno la coreference
     for i in indici_p:  # prendo le frasi attraverso gli indici delle frasi che sono veri positivi (considero solo quelli)
         if str(defile.name).startswith("de"):
-            coref = coreferences(i, sent_de, sent_core, pron)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco con pronomi pers e poss
-            coref_all = coreferences(i, sent_de, sent_core, pron_all)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco con pers poss e rel
+            coref = coreferences(i, sent_de, sent_core, pron, names)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco con pronomi pers e poss
+            coref_all = coreferences(i, sent_de, sent_core, pron_all, names)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco con pers poss e rel
             sent_core_de.append(coref)  # aggiungo la frase con pronomi possessivi e personali alla lista
             sent_core_de_all.append(coref_all)  # aggiungo la frase con pronomi possessivi e personali e relativi alla lista
 
@@ -263,7 +301,7 @@ def perfect_coreference(enfile, defile):
     with open("pronouns_all.json") as f:
         pron_all = json.load(f)
 
-    names = open("names_pcr" + enfile.name[:len(enfile.name) - 8] + "en.txt", "r")
+    names = open("names_pcr." + enfile.name[:len(enfile.name) - 8] + "en.txt", "r")
 
     sent_ = open(enfile.name[:len(enfile.name) - 4] + ".sent.coref.txt", "r").readlines()
 
@@ -313,7 +351,7 @@ def perfect_coreference(enfile, defile):
     sent_core_de_all = []  # lista che conterra' le frasi che hanno la coreference
     for i in range(min(len(frasi_ing), len(frasi_ted))):  # prendo le frasi attraverso gli indici della lista
         if str(defile.name).startswith("de"):
-            coref = coreferences(i, sent_de, sent_core, pron)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco con pronomi pers e poss
+            coref = coreferences(i, sent_de, sent_core, pron, names)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco con pronomi pers e poss
             coref_all = coreferences(i, sent_de, sent_core, pron_all, names)  # richiamo il metodo che si occupa di aggiungere le coref al testo tedesco con pers poss e rel
             sent_core_de.append(coref)  # aggiungo la frase con pronomi possessivi e personali alla lista
             sent_core_de_all.append(coref_all)  # aggiungo la frase con pronomi possessivi e personali e relativi alla lista
@@ -353,6 +391,8 @@ def coreferences(i, sent_de, sent_core, pron, names):
             parola = part_sent[part_sent.index("(") + 1: part_sent.index(")")]  # prendo la parola tra parentesi alla destra del pronome e la salvo
             if parola in chain(*names):
                 pro_en.append((token.text, token.i, "(" + parola + ")"))  # aggiungo alla lista la tripla di pronome indice e parola
+            else:
+                pro_en.append((token.text, token.i, ""))
 
     y = 0  # un contatore che serve per posizione in modo corretto le parole vicino ai pronomi
     c = 0  # contatore per prendere il pronome giusto dalla lista
